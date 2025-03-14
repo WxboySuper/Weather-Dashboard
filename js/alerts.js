@@ -78,7 +78,6 @@ const AlertsManager = {
      */
     processAlerts: function(data) {
         // Filter for severe weather alerts only with specific order of importance
-        // Removed 'flood warning' and 'special weather statement'
         const severeWeatherEvents = [
             'tornado warning',
             'severe thunderstorm warning',
@@ -87,23 +86,23 @@ const AlertsManager = {
             'severe thunderstorm watch',
             'flash flood watch'
         ];
-        
+
         const validAlerts = data.features.filter(alert => {
             if (!alert.properties || !alert.properties.event) return false;
             const eventLower = alert.properties.event.toLowerCase();
             return severeWeatherEvents.some(severeEvent => eventLower.includes(severeEvent));
         });
-        
+
         // Store the alerts
         this.activeAlerts = validAlerts.map(alert => {
             const props = alert.properties;
             const eventLower = props.event.toLowerCase();
-            
+
             // Extract damage threat tag from description if available
             let damageThreatTag = null;
             if (props.description) {
                 const descLower = props.description.toLowerCase();
-                
+
                 // Check for tornado damage threat tags
                 if (descLower.includes('tornado damage threat')) {
                     if (descLower.includes('catastrophic')) damageThreatTag = 'CATASTROPHIC DAMAGE THREAT';
@@ -125,13 +124,13 @@ const AlertsManager = {
                     else if (descLower.includes('catastrophic')) damageThreatTag = 'CATASTROPHIC FLOOD';
                 }
             }
-            
+
             // Determine priority based on alert type
             let priority = 999;
             severeWeatherEvents.forEach((severeEvent, index) => {
                 if (eventLower.includes(severeEvent)) {
                     priority = Math.min(priority, index);
-                    
+
                     // Higher priority for tagged alerts
                     if (damageThreatTag) {
                         if (damageThreatTag.includes('CATASTROPHIC') || 
@@ -146,7 +145,7 @@ const AlertsManager = {
                     }
                 }
             });
-            
+
             return {
                 id: props.id,
                 event: props.event,
@@ -164,17 +163,15 @@ const AlertsManager = {
                 damageThreatTag: damageThreatTag // Added damage threat tag
             };
         });
-        
+
         // Sort by priority (most severe first)
         this.activeAlerts.sort((a, b) => a.priority - b.priority);
-        
+
         // Update alert counters
         this.updateAlertCounters();
     },
 
-    /**
-     * Update alert counters
-     */
+    // Update alert counters
     updateAlertCounters: function() {
         // Initialize counters
         const counters = {
@@ -183,8 +180,7 @@ const AlertsManager = {
             'flood-warning': 0,
             'tornado-watch': 0,
             'tstorm-watch': 0,
-            'flood-watch': 0,
-            'statement': 0
+            'flood-watch': 0
         };
 
         // Count alerts by type
@@ -192,11 +188,10 @@ const AlertsManager = {
             const eventLower = alert.event.toLowerCase();
             if (eventLower.includes('tornado warning')) counters['tornado-warning']++;
             else if (eventLower.includes('thunderstorm warning')) counters['tstorm-warning']++;
-            else if (eventLower.includes('flood warning') || eventLower.includes('flash flood warning')) counters['flood-warning']++;
+            else if (eventLower.includes('flash flood warning')) counters['flood-warning']++;
             else if (eventLower.includes('tornado watch')) counters['tornado-watch']++;
             else if (eventLower.includes('thunderstorm watch')) counters['tstorm-watch']++;
-            else if (eventLower.includes('flood watch') || eventLower.includes('flash flood watch')) counters['flood-watch']++;
-            else if (eventLower.includes('special weather')) counters['statement']++;
+            else if (eventLower.includes('flash flood watch')) counters['flood-watch']++;
         });
 
         // Create or update the counter display
@@ -221,7 +216,6 @@ const AlertsManager = {
             <div class="counter-item watch tornado-watch">${counters['tornado-watch']} TOR WTCH</div>
             <div class="counter-item watch tstorm-watch">${counters['tstorm-watch']} SVR WTCH</div>
             <div class="counter-item watch flood-watch">${counters['flood-watch']} FFW WTCH</div>
-            <div class="counter-item other">${counters['statement']} SPS</div>
         `;
     },
 
@@ -234,7 +228,6 @@ const AlertsManager = {
         const eventLower = event.toLowerCase();
         if (eventLower.includes('warning')) return 'warning';
         if (eventLower.includes('watch')) return 'watch';
-        if (eventLower.includes('advisory')) return 'advisory';
         return 'other';
     },
 
@@ -263,7 +256,7 @@ const AlertsManager = {
             });
 
             const title = Utils.createElement('h3', {}, alert.event);
-            
+
             // Add damage threat tag if available
             if (alert.damageThreatTag) {
                 const tagElement = Utils.createElement('div', { 
@@ -271,21 +264,21 @@ const AlertsManager = {
                 }, alert.damageThreatTag);
                 alertElement.appendChild(tagElement);
             }
-            
+
             const area = Utils.createElement('p', {}, alert.areaDesc);
             const time = Utils.createElement('p', {}, `Until: ${Utils.formatDate(alert.expires)}`);
-            
+
             alertElement.appendChild(title);
             alertElement.appendChild(area);
             alertElement.appendChild(time);
-            
+
             // Add click handler to show full alert details
             alertElement.addEventListener('click', () => this.showAlertDetails(alert));
-            
+
             warningFeed.appendChild(alertElement);
         });
     },
-    
+
     /**
      * Update warning polygons on the map
      */
@@ -293,12 +286,12 @@ const AlertsManager = {
         // Clear existing warning polygons and watches
         RadarManager.clearWarningPolygons();
         RadarManager.clearWatchPolygons();
-        
+
         // Add polygons for each alert with geometry
         this.activeAlerts.forEach(alert => {
             if (alert.geometry) {
                 const eventLower = alert.event.toLowerCase();
-                
+
                 if (eventLower.includes('watch')) {
                     // Add as a watch polygon with lower opacity
                     RadarManager.addWatchPolygon(alert.geometry, alert.id, alert.event);
@@ -309,7 +302,7 @@ const AlertsManager = {
             }
         });
     },
-    
+
     /**
      * Show detailed information for a specific alert
      * @param {Object} alert - Alert object
@@ -318,9 +311,9 @@ const AlertsManager = {
         const modal = document.getElementById('alert-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalContent = document.getElementById('modal-content');
-        
+
         modalTitle.textContent = alert.event;
-        
+
         let content = `
             <p class="alert-headline">${alert.headline}</p>
             <div class="alert-meta">
@@ -335,7 +328,7 @@ const AlertsManager = {
                 <p>${alert.description.replace(/\n/g, '<br>')}</p>
             </div>
         `;
-        
+
         if (alert.instruction) {
             content += `
                 <div class="alert-instructions">
@@ -344,18 +337,18 @@ const AlertsManager = {
                 </div>
             `;
         }
-        
+
         modalContent.innerHTML = content;
-        
+
         // Show the modal
         modal.style.display = 'block';
-        
+
         // If the alert has geometry, zoom to it
         if (alert.geometry) {
             RadarManager.zoomToWarning(alert.geometry);
         }
     },
-    
+
     /**
      * Cleanup resources
      */
