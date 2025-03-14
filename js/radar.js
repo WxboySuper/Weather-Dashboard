@@ -9,7 +9,7 @@ const RadarManager = {
     radarRefreshInterval: null,
     currentProduct: 'reflectivity',
     currentMapStyle: 'dark',
-    
+
     /**
      * Initialize the radar map
      */
@@ -20,15 +20,15 @@ const RadarManager = {
             zoom: CONFIG.MAP.zoom,
             zoomControl: false
         });
-        
+
         // Add zoom control to top-right
         L.control.zoom({
             position: 'topright'
         }).addTo(this.map);
-        
+
         // Add map style selector to the radar controls
         const radarControls = document.querySelector('.radar-controls');
-        
+
         // Add map style selector
         const mapStyleSelector = document.createElement('select');
         mapStyleSelector.id = 'map-style';
@@ -38,22 +38,22 @@ const RadarManager = {
             <option value="satellite">Satellite</option>
             <option value="terrain">Terrain</option>
         `;
-        
+
         const mapStyleLabel = document.createElement('label');
         mapStyleLabel.textContent = 'Map Style: ';
         mapStyleLabel.appendChild(mapStyleSelector);
-        
+
         radarControls.appendChild(mapStyleLabel);
-        
+
         // Set up map style change event
         mapStyleSelector.addEventListener('change', (e) => {
             this.currentMapStyle = e.target.value;
             this.updateMapStyle();
         });
-        
+
         // Initial map style
         this.updateMapStyle();
-        
+
         // Add state and county boundaries
         fetch('https://raw.githubusercontent.com/Johan-dutoit/us-states-counties-geojson/master/states.json')
             .then(response => response.json())
@@ -68,23 +68,23 @@ const RadarManager = {
                 }).addTo(this.map);
             })
             .catch(error => console.error('Error loading state boundaries:', error));
-            
+
         // Set up radar product selector
         const radarSelector = document.getElementById('radar-product');
         radarSelector.addEventListener('change', (e) => {
             this.currentProduct = e.target.value;
             this.updateRadar();
         });
-        
+
         // Load initial radar
         this.updateRadar();
-        
+
         // Set up refresh interval
         this.radarRefreshInterval = setInterval(() => {
             this.updateRadar();
         }, CONFIG.RADAR.refreshInterval);
     },
-    
+
     /**
      * Update the map style based on user selection
      */
@@ -95,10 +95,10 @@ const RadarManager = {
                 this.map.removeLayer(layer);
             }
         });
-        
+
         // Add new tile layer based on selected style
         let tileLayer;
-        
+
         switch(this.currentMapStyle) {
             case 'streets':
                 tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -128,17 +128,17 @@ const RadarManager = {
                 });
                 break;
         }
-        
+
         // Add the base map and ensure it's at the bottom
         tileLayer.addTo(this.map);
         tileLayer.bringToBack();
-        
+
         // Make sure radar is on top if it exists
         if (this.radarLayer) {
             this.radarLayer.bringToFront();
         }
     },
-    
+
     /**
      * Update the radar display
      */
@@ -147,17 +147,17 @@ const RadarManager = {
         if (this.radarLayer) {
             this.map.removeLayer(this.radarLayer);
         }
-        
+
         // Get the radar URL based on product type
         const radarUrl = this.getRadarUrl(this.currentProduct);
-        
+
         // Add the new radar layer
         this.radarLayer = L.tileLayer(radarUrl, {
             opacity: CONFIG.RADAR.opacity,
             attribution: 'Radar: NOAA/NWS'
         }).addTo(this.map);
     },
-    
+
     /**
      * Get the appropriate radar URL for the selected product
      * @param {string} product - Radar product type
@@ -167,7 +167,7 @@ const RadarManager = {
         // Using Iowa Environmental Mesonet's tile server for radar imagery
         // Cache busting parameter to avoid stale images
         const cacheBuster = new Date().getTime();
-        
+
         switch(product) {
             case 'reflectivity':
                 // Base reflectivity
@@ -183,7 +183,7 @@ const RadarManager = {
                 return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?${cacheBuster}`;
         }
     },
-    
+
     /**
      * Add warning polygon to the map
      * @param {Object} geometry - GeoJSON geometry object
@@ -192,7 +192,7 @@ const RadarManager = {
      */
     addWarningPolygon: function(geometry, type, id) {
         let color;
-        
+
         // Set color based on warning type
         switch(type.toLowerCase()) {
             case 'tornado warning':
@@ -202,17 +202,12 @@ const RadarManager = {
                 color = '#FFFF00'; // Yellow
                 break;
             case 'flash flood warning':
-            case 'flood warning':
                 color = '#00FF00'; // Green
-                break;
-            case 'winter storm warning':
-            case 'winter weather advisory':
-                color = '#00FFFF'; // Cyan
                 break;
             default:
                 color = '#FF00FF'; // Magenta for other warnings
         }
-        
+
         // Add the polygon to the map
         L.geoJSON(geometry, {
             style: {
@@ -225,7 +220,7 @@ const RadarManager = {
             id: `warning-${id}`
         }).addTo(this.map);
     },
-    
+
     /**
      * Add watch polygon to the map
      * @param {Object} geometry - GeoJSON geometry object
@@ -234,19 +229,19 @@ const RadarManager = {
      */
     addWatchPolygon: function(geometry, id, type) {
         let color;
-        
+
         // Set color based on watch type
         const typeLower = type.toLowerCase();
         if (typeLower.includes('tornado')) {
             color = '#FFFF00'; // Yellow for tornado watches
         } else if (typeLower.includes('thunderstorm')) {
             color = '#FF69B4'; // Darker pink for severe thunderstorm watches
-        } else if (typeLower.includes('flood') || typeLower.includes('flash flood')) {
+        } else if (typeLower.includes('flash flood')) {
             color = '#006400'; // Dark green for flood watches
         } else {
             color = '#FFA500'; // Orange for other watches
         }
-        
+
         // Add the polygon to the map
         const watchLayer = L.geoJSON(geometry, {
             style: {
@@ -257,17 +252,17 @@ const RadarManager = {
                 fillOpacity: 0.15
             }
         });
-        
+
         // Store the watch layer by ID for later reference
         this.watchLayers[id] = watchLayer;
-        
+
         // Add to map
         watchLayer.addTo(this.map);
-        
+
         // Make sure warnings stay on top of watches
         Object.values(this.watchLayers).forEach(layer => layer.bringToBack());
     },
-    
+
     /**
      * Clear all warning polygons from the map
      */
@@ -278,7 +273,7 @@ const RadarManager = {
             }
         });
     },
-    
+
     /**
      * Clear all watch polygons from the map
      */
@@ -288,7 +283,7 @@ const RadarManager = {
         });
         this.watchLayers = {};
     },
-    
+
     /**
      * Zoom to a specific warning polygon
      * @param {Object} geometry - GeoJSON geometry object
@@ -297,7 +292,7 @@ const RadarManager = {
         const bounds = L.geoJSON(geometry).getBounds();
         this.map.fitBounds(bounds, { padding: [50, 50] });
     },
-    
+
     /**
      * Cleanup resources
      */
