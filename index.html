@@ -25,6 +25,7 @@
                         <option value="velocity">Velocity</option>
                         <option value="composite">Composite Reflectivity</option>
                     </select>
+                    <div id="radar-refresh-counter" class="refresh-counter">Radar Refresh: 0</div>
                 </div>
             </section>
 
@@ -39,13 +40,15 @@
                 <div id="warning-feed" class="scrollable-feed">
                     <div class="loading">Loading alert data...</div>
                 </div>
+                <div id="alerts-refresh-counter" class="refresh-counter">Alerts Refresh: 0</div>
             </section>
 
             <!-- Combined SPC/MCD Panel -->
             <section class="dashboard-panel combined-panel">
-                <div class="panel-tabs">
+                <div class="panel-tabs" style="display: flex; align-items: center; gap: 10px;">
                     <button class="panel-tab-button active" data-panel="spc">SPC Outlooks</button>
                     <button class="panel-tab-button" data-panel="mcd">Mesoscale Discussions</button>
+                    <div id="spc-refresh-counter" class="refresh-counter" style="margin-left: auto;">SPC Refresh: 0</div>
                 </div>
 
                 <!-- SPC Outlooks Content -->
