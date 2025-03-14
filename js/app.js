@@ -66,8 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const soundToggleLabel = document.querySelector('.sound-toggle');
     let soundEnabled = true;
 
+    // Add debugging logs to verify sound toggle behavior
     soundToggle.addEventListener('change', (e) => {
         soundEnabled = e.target.checked;
+        console.log(`Sound Enabled: ${soundEnabled}`); // Debugging log
         if (soundEnabled) {
             soundToggleLabel.classList.add('enabled');
             soundToggleLabel.classList.remove('disabled');
@@ -77,8 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Modify the triggerNotification function to respect the sound toggle
+    // Add debugging log in triggerNotification
     function triggerNotification(title, message, type, audioFile) {
+        console.log(`Triggering notification: ${title}, Sound Enabled: ${soundEnabled}, Audio File: ${audioFile}`); // Debugging log
+
         // Create notification element
         const notificationContainer = document.querySelector('.notification-container');
         const notification = Utils.createElement('div', {
