@@ -81,8 +81,8 @@ const AlertsManager = {
         const severeWeatherEvents = [
             'tornado warning', 'tornado watch', 
             'severe thunderstorm warning', 'severe thunderstorm watch',
-            'flash flood warning', 'flood warning', 'flood watch',
-            'special weather statement'
+            'flash flood warning', 'flash flood watch',
+            'special weather statement', 'severe weather statement'
         ];
         
         const validAlerts = data.features.filter(alert => {
