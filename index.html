@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Severe Weather Monitoring Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>Severe Weather Monitoring Dashboard</h1>
+            <div class="time-display" id="current-time">Loading...</div>
+        </header>
+        
+        <div class="dashboard-grid">
+            <!-- Radar Display Section -->
+            <section class="dashboard-panel radar-panel">
+                <h2>NOAA Radar</h2>
+                <div id="radar-map" class="map-container"></div>
+                <div class="radar-controls">
+                    <select id="radar-product">
+                        <option value="reflectivity">Base Reflectivity</option>
+                        <option value="velocity">Velocity</option>
+                        <option value="composite">Composite Reflectivity</option>
+                    </select>
+                </div>
+            </section>
+            
+            <!-- Warning Feed Section -->
+            <section class="dashboard-panel warnings-panel">
+                <h2>Active Alerts</h2>
+                <div class="filter-controls">
+                    <label><input type="checkbox" class="alert-filter" value="warning" checked> Warnings</label>
+                    <label><input type="checkbox" class="alert-filter" value="watch" checked> Watches</label>
+                    <label><input type="checkbox" class="alert-filter" value="advisory" checked> Advisories</label>
+                </div>
+                <div id="warning-feed" class="scrollable-feed">
+                    <div class="loading">Loading alert data...</div>
+                </div>
+            </section>
+            
+            <!-- SPC Outlooks Section -->
+            <section class="dashboard-panel spc-panel">
+                <h2>SPC Outlooks</h2>
+                <div class="tabs">
+                    <button class="tab-button active" data-day="1">Day 1</button>
+                    <button class="tab-button" data-day="2">Day 2</button>
+                    <button class="tab-button" data-day="3">Day 3</button>
+                    <button class="tab-button" data-day="4-8">Days 4-8</button>
+                </div>
+                <div id="outlook-display">
+                    <img id="outlook-image" class="spc-image" src="" alt="SPC Outlook">
+                </div>
+            </section>
+            
+            <!-- Mesoscale Discussions Section -->
+            <section class="dashboard-panel meso-panel">
+                <h2>Mesoscale Discussions</h2>
+                <div id="meso-feed" class="scrollable-feed">
+                    <div class="loading">Loading mesoscale discussions...</div>
+                </div>
+            </section>
+        </div>
+        
+        <div id="alert-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2 id="modal-title"></h2>
+                <div id="modal-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/radar.js"></script>
+    <script src="js/alerts.js"></script>
+    <script src="js/spc.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
