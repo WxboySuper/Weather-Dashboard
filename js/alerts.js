@@ -77,14 +77,19 @@ const AlertsManager = {
      * @param {Object} data - Alert data from NWS API
      */
     processAlerts: function(data) {
-        // Only use alerts with a defined event (warning, watch, etc.)
-        const validAlerts = data.features.filter(alert => 
-            alert.properties && 
-            alert.properties.event && 
-            (alert.properties.event.toLowerCase().includes('warning') || 
-             alert.properties.event.toLowerCase().includes('watch') ||
-             alert.properties.event.toLowerCase().includes('advisory'))
-        );
+        // Filter for severe weather alerts only (tornado, t-storm, flood)
+        const severeWeatherEvents = [
+            'tornado warning', 'tornado watch', 
+            'severe thunderstorm warning', 'severe thunderstorm watch',
+            'flash flood warning', 'flood warning', 'flood watch',
+            'special weather statement'
+        ];
+        
+        const validAlerts = data.features.filter(alert => {
+            if (!alert.properties || !alert.properties.event) return false;
+            const eventLower = alert.properties.event.toLowerCase();
+            return severeWeatherEvents.some(severeEvent => eventLower.includes(severeEvent));
+        });
         
         // Store the alerts
         this.activeAlerts = validAlerts.map(alert => {
@@ -107,6 +112,12 @@ const AlertsManager = {
         
         // Sort by severity (most severe first)
         this.activeAlerts.sort((a, b) => {
+            // Prioritize tornado warnings first, then severe t-storm, then others
+            if (a.event.toLowerCase().includes('tornado warning')) return -1;
+            if (b.event.toLowerCase().includes('tornado warning')) return 1;
+            if (a.event.toLowerCase().includes('severe thunderstorm warning')) return -1;
+            if (b.event.toLowerCase().includes('severe thunderstorm warning')) return 1;
+            
             const severityOrder = { extreme: 0, severe: 1, moderate: 2, minor: 3, unknown: 4 };
             return severityOrder[a.severity] - severityOrder[b.severity];
         });
