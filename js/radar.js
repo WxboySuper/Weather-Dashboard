@@ -87,25 +87,23 @@ const RadarManager = {
      * @returns {string} - Radar tile URL
      */
     getRadarUrl: function(product) {
-        // This uses Weather.gov's Ridge radar tiles as they're freely available
-        // For MRMS data, you would need to use a different source
-        
+        // Using Iowa Environmental Mesonet's tile server for radar imagery
         // Cache busting parameter to avoid stale images
         const cacheBuster = new Date().getTime();
         
         switch(product) {
             case 'reflectivity':
                 // Base reflectivity
-                return `${CONFIG.WX_GOV_RADAR}/N0R/{z}/{x}/{y}.png?${cacheBuster}`;
+                return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?${cacheBuster}`;
             case 'velocity':
                 // Base velocity
-                return `${CONFIG.WX_GOV_RADAR}/N0V/{z}/{x}/{y}.png?${cacheBuster}`;
+                return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0u-900913/{z}/{x}/{y}.png?${cacheBuster}`;
             case 'composite':
                 // Composite reflectivity
-                return `${CONFIG.WX_GOV_RADAR}/NCR/{z}/{x}/{y}.png?${cacheBuster}`;
+                return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0r-900913/{z}/{x}/{y}.png?${cacheBuster}`;
             default:
                 // Default to base reflectivity
-                return `${CONFIG.WX_GOV_RADAR}/N0R/{z}/{x}/{y}.png?${cacheBuster}`;
+                return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?${cacheBuster}`;
         }
     },
     
