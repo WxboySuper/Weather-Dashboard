@@ -30,7 +30,7 @@ const CONFIG = {
     
     // Alert settings
     ALERTS: {
-        refreshInterval: 60000, // 1 minute in milliseconds
+        refreshInterval: 15000, // 15 seconds in milliseconds
         refreshCounter: 0 // Counter to track refreshes
     },
     
