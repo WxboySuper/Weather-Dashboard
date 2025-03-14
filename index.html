@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeatherboySuper's Severe Weather Monitoring Dashboard</title>
+    <title>Severe Weather Monitoring Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 </head>
 <body>
     <div class="dashboard">
         <header>
-            <h1>WeatherboySuper's Severe Weather Monitoring Dashboard</h1>
+            <h1>Severe Weather Monitoring Dashboard</h1>
             <div class="time-display" id="current-time">Loading...</div>
         </header>
 
@@ -41,25 +41,39 @@
                 </div>
             </section>
 
-            <!-- SPC Outlooks Section -->
-            <section class="dashboard-panel spc-panel">
-                <h2>SPC Outlooks</h2>
-                <div class="tabs">
-                    <button class="tab-button active" data-day="1">Day 1</button>
-                    <button class="tab-button" data-day="2">Day 2</button>
-                    <button class="tab-button" data-day="3">Day 3</button>
-                    <button class="tab-button" data-day="4-8">Days 4-8</button>
+            <!-- Combined SPC/MCD Panel -->
+            <section class="dashboard-panel combined-panel">
+                <div class="panel-tabs">
+                    <button class="panel-tab-button active" data-panel="spc">SPC Outlooks</button>
+                    <button class="panel-tab-button" data-panel="mcd">Mesoscale Discussions</button>
                 </div>
-                <div id="outlook-display">
-                    <img id="outlook-image" class="spc-image" src="" alt="SPC Outlook">
-                </div>
-            </section>
 
-            <!-- Mesoscale Discussions Section -->
-            <section class="dashboard-panel meso-panel">
-                <h2>Mesoscale Discussions</h2>
-                <div id="meso-feed" class="scrollable-feed">
-                    <div class="loading">Loading mesoscale discussions...</div>
+                <!-- SPC Outlooks Content -->
+                <div id="spc-content" class="panel-content active">
+                    <div class="spc-day-tabs tabs">
+                        <button class="tab-button active" data-day="1">Day 1</button>
+                        <button class="tab-button" data-day="2">Day 2</button>
+                        <button class="tab-button" data-day="3">Day 3</button>
+                        <button class="tab-button" data-day="4-8">Days 4-8</button>
+                    </div>
+                    <div class="outlook-type-selector">
+                        <select id="outlook-type">
+                            <option value="categorical">Categorical</option>
+                            <option value="tornado">Tornado</option>
+                            <option value="wind">Wind</option>
+                            <option value="hail">Hail</option>
+                        </select>
+                    </div>
+                    <div id="outlook-display">
+                        <img id="outlook-image" class="spc-image" src="" alt="SPC Outlook">
+                    </div>
+                </div>
+
+                <!-- MCD Content -->
+                <div id="mcd-content" class="panel-content">
+                    <div id="meso-feed" class="scrollable-feed">
+                        <div class="loading">Loading mesoscale discussions...</div>
+                    </div>
                 </div>
             </section>
         </div>
