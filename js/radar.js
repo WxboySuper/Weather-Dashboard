@@ -168,16 +168,11 @@ const RadarManager = {
         // Cache busting parameter to avoid stale images
         const cacheBuster = new Date().getTime();
 
+        // Removed velocity and composite reflectivity radar options
         switch(product) {
             case 'reflectivity':
                 // Base reflectivity
                 return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?${cacheBuster}`;
-            case 'velocity':
-                // Base velocity
-                return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0u-900913/{z}/{x}/{y}.png?${cacheBuster}`;
-            case 'composite':
-                // Composite reflectivity
-                return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0r-900913/{z}/{x}/{y}.png?${cacheBuster}`;
             default:
                 // Default to base reflectivity
                 return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?${cacheBuster}`;
