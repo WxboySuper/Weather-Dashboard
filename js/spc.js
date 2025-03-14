@@ -200,77 +200,16 @@ const SPCManager = {
     fetchMesoscaleDiscussions: async function() {
         const mesoFeed = document.getElementById('meso-feed');
         if (!mesoFeed) return;
-        
+
         try {
             mesoFeed.innerHTML = '<div class="loading">Loading mesoscale discussions...</div>';
             
-            // Use the correct SPC RSS feed for MCDs
-            const response = await fetch(`https://www.spc.noaa.gov/products/spcmdrss.xml?${new Date().getTime()}`);
-            
+            // Fetch from MCD index page
+            const response = await fetch(`https://www.spc.noaa.gov/products/md/?${new Date().getTime()}`);
             if (!response.ok) {
                 throw new Error(`Failed to fetch mesoscale discussions: ${response.status}`);
             }
             
-            const text = await response.text();
-            
-            // Parse the XML
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(text, "text/xml");
-            const items = xmlDoc.querySelectorAll('item');
-            
-            // Process the discussions
-            this.mesoDiscussions = [];
-            
-            if (items && items.length > 0) {
-                items.forEach(item => {
-                    try {
-                        const title = item.querySelector('title').textContent;
-                        const link = item.querySelector('link').textContent;
-                        const description = item.querySelector('description').textContent;
-                        const pubDate = item.querySelector('pubDate').textContent;
-                        
-                        // Extract MD number from title (format: "Mesoscale Discussion 123")
-                        const mdMatch = title.match(/Mesoscale Discussion (\d+)/);
-                        const mdNumber = mdMatch ? mdMatch[1] : 'Unknown';
-                        
-                        this.mesoDiscussions.push({
-                            title,
-                            link,
-                            description,
-                            mdNumber,
-                            pubDate
-                        });
-                    } catch (itemError) {
-                        console.error('Error processing MCD item:', itemError);
-                    }
-                });
-            }
-            
-            if (this.mesoDiscussions.length === 0) {
-                const mesoFeed = document.getElementById('meso-feed');
-                if (mesoFeed) {
-                    mesoFeed.innerHTML = '<div class="no-meso">No active mesoscale discussions found.</div>';
-                }
-            } else {
-                // Display the discussions
-                this.displayMesoscaleDiscussions();
-            }
-        } catch (error) {
-            console.error('Error fetching mesoscale discussions:', error);
-            const mesoFeed = document.getElementById('meso-feed');
-            if (mesoFeed) {
-                mesoFeed.innerHTML = '<div class="error">Unable to load mesoscale discussions.</div>';
-            }
-        }
-    },
-
-    /**
-     * Try to fetch MCDs from an alternative source
-     */
-    fetchMCDsFromAlternateSource: async function() {
-        try {
-            // Try direct access to MCD index page
-            const response = await fetch(`https://www.spc.noaa.gov/products/md/?${new Date().getTime()}`);
             const html = await response.text();
             
             // Parse the HTML to find active MCDs
@@ -285,43 +224,44 @@ const SPCManager = {
                 // Process only the most recent MCDs (up to 5)
                 const recentLinks = Array.from(mdLinks).slice(0, 5);
                 
-                recentLinks.forEach(link => {
+                for (const link of recentLinks) {
                     const href = link.getAttribute('href');
                     const mdMatch = href.match(/md(\d+)\.html/);
                     
                     if (mdMatch) {
                         const mdNumber = mdMatch[1];
-                        // Find nearby text for title, or use generic title
-                        let title = `Mesoscale Discussion ${mdNumber}`;
-                        if (link.textContent && link.textContent.trim()) {
-                            title = link.textContent.trim();
+                        // Try to get the full MCD content
+                        try {
+                            const mdResponse = await fetch(`https://www.spc.noaa.gov/products/md/${href}?${new Date().getTime()}`);
+                            const mdText = await mdResponse.text();
+                            const mdDiv = document.createElement('div');
+                            mdDiv.innerHTML = mdText;
+                            
+                            // Extract the pre-formatted text which contains the full discussion
+                            const preText = mdDiv.querySelector('pre')?.textContent || '';
+                            
+                            this.mesoDiscussions.push({
+                                title: `Mesoscale Discussion ${mdNumber}`,
+                                link: `https://www.spc.noaa.gov/products/md/${href}`,
+                                description: preText,
+                                mdNumber,
+                                pubDate: new Date().toUTCString() // Current time as fallback
+                            });
+                        } catch (mdError) {
+                            console.error('Error fetching individual MD:', mdError);
                         }
-                        
-                        this.mesoDiscussions.push({
-                            title: title,
-                            link: `https://www.spc.noaa.gov/products/md/${href}`,
-                            mdNumber,
-                            pubDate: new Date().toUTCString() // No date info, use current
-                        });
                     }
-                });
+                }
             }
             
             if (this.mesoDiscussions.length === 0) {
-                // If still no MCDs, show "No active MCDs" message
-                const mesoFeed = document.getElementById('meso-feed');
-                if (mesoFeed) {
-                    mesoFeed.innerHTML = '<div class="no-meso">No active mesoscale discussions found.</div>';
-                }
+                mesoFeed.innerHTML = '<div class="no-meso">No active mesoscale discussions found.</div>';
             } else {
                 this.displayMesoscaleDiscussions();
             }
         } catch (error) {
-            console.error('Error fetching from alternate source:', error);
-            const mesoFeed = document.getElementById('meso-feed');
-            if (mesoFeed) {
-                mesoFeed.innerHTML = '<div class="error">Unable to load mesoscale discussions.</div>';
-            }
+            console.error('Error fetching mesoscale discussions:', error);
+            mesoFeed.innerHTML = '<div class="error">Unable to load mesoscale discussions.</div>';
         }
     },
     
