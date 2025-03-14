@@ -78,34 +78,75 @@ const AlertsManager = {
      */
     processAlerts: function(data) {
         // Filter for severe weather alerts only with specific order of importance
+        // Removed 'flood warning' and 'special weather statement'
         const severeWeatherEvents = [
             'tornado warning',
             'severe thunderstorm warning',
-            'flash flood warning', 'flood warning',
+            'flash flood warning',
             'tornado watch',
             'severe thunderstorm watch',
-            'flash flood watch', 'flood watch',
+            'flash flood watch'
         ];
-
+        
         const validAlerts = data.features.filter(alert => {
             if (!alert.properties || !alert.properties.event) return false;
             const eventLower = alert.properties.event.toLowerCase();
             return severeWeatherEvents.some(severeEvent => eventLower.includes(severeEvent));
         });
-
+        
         // Store the alerts
         this.activeAlerts = validAlerts.map(alert => {
             const props = alert.properties;
             const eventLower = props.event.toLowerCase();
-
+            
+            // Extract damage threat tag from description if available
+            let damageThreatTag = null;
+            if (props.description) {
+                const descLower = props.description.toLowerCase();
+                
+                // Check for tornado damage threat tags
+                if (descLower.includes('tornado damage threat')) {
+                    if (descLower.includes('catastrophic')) damageThreatTag = 'CATASTROPHIC DAMAGE THREAT';
+                    else if (descLower.includes('considerable')) damageThreatTag = 'CONSIDERABLE DAMAGE THREAT';
+                    else if (descLower.includes('radar indicated')) damageThreatTag = 'RADAR INDICATED';
+                    else if (descLower.includes('observed')) damageThreatTag = 'OBSERVED';
+                }
+                // Check for thunderstorm damage threat tags
+                else if (eventLower.includes('thunderstorm')) {
+                    if (descLower.includes('destructive')) damageThreatTag = 'DESTRUCTIVE DAMAGE THREAT';
+                    else if (descLower.includes('considerable')) damageThreatTag = 'CONSIDERABLE DAMAGE THREAT';
+                    else if (descLower.includes('significant')) damageThreatTag = 'SIGNIFICANT DAMAGE THREAT';
+                    else if (descLower.includes('baseline')) damageThreatTag = 'BASE DAMAGE THREAT';
+                }
+                // Check for flash flood damage threat tags
+                else if (eventLower.includes('flash flood')) {
+                    if (descLower.includes('flash flood emergency')) damageThreatTag = 'FLASH FLOOD EMERGENCY';
+                    else if (descLower.includes('considerable')) damageThreatTag = 'CONSIDERABLE FLOOD THREAT';
+                    else if (descLower.includes('catastrophic')) damageThreatTag = 'CATASTROPHIC FLOOD';
+                }
+            }
+            
             // Determine priority based on alert type
             let priority = 999;
             severeWeatherEvents.forEach((severeEvent, index) => {
                 if (eventLower.includes(severeEvent)) {
                     priority = Math.min(priority, index);
+                    
+                    // Higher priority for tagged alerts
+                    if (damageThreatTag) {
+                        if (damageThreatTag.includes('CATASTROPHIC') || 
+                            damageThreatTag.includes('DESTRUCTIVE') ||
+                            damageThreatTag.includes('EMERGENCY')) {
+                            priority -= 0.3; // Highest priority
+                        } else if (damageThreatTag.includes('CONSIDERABLE')) {
+                            priority -= 0.2; // High priority
+                        } else if (damageThreatTag.includes('OBSERVED')) {
+                            priority -= 0.1; // Medium priority
+                        }
+                    }
                 }
             });
-
+            
             return {
                 id: props.id,
                 event: props.event,
@@ -119,13 +160,14 @@ const AlertsManager = {
                 expires: props.expires,
                 geometry: alert.geometry,
                 type: this.getCategoryType(props.event),
-                priority: priority // Lower number = higher priority
+                priority: priority, // Lower number = higher priority
+                damageThreatTag: damageThreatTag // Added damage threat tag
             };
         });
-
+        
         // Sort by priority (most severe first)
         this.activeAlerts.sort((a, b) => a.priority - b.priority);
-
+        
         // Update alert counters
         this.updateAlertCounters();
     },
@@ -221,6 +263,15 @@ const AlertsManager = {
             });
 
             const title = Utils.createElement('h3', {}, alert.event);
+            
+            // Add damage threat tag if available
+            if (alert.damageThreatTag) {
+                const tagElement = Utils.createElement('div', { 
+                    class: 'damage-threat-tag'
+                }, alert.damageThreatTag);
+                alertElement.appendChild(tagElement);
+            }
+            
             const area = Utils.createElement('p', {}, alert.areaDesc);
             const time = Utils.createElement('p', {}, `Until: ${Utils.formatDate(alert.expires)}`);
             
