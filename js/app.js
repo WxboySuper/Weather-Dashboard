@@ -60,4 +60,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial update
     updateRefreshCounters();
+
+    // Add functionality to enable or disable sound effects with visual confirmation
+    const soundToggle = document.getElementById('sound-toggle');
+    const soundToggleLabel = document.querySelector('.sound-toggle');
+    let soundEnabled = true;
+
+    soundToggle.addEventListener('change', (e) => {
+        soundEnabled = e.target.checked;
+        if (soundEnabled) {
+            soundToggleLabel.classList.add('enabled');
+            soundToggleLabel.classList.remove('disabled');
+        } else {
+            soundToggleLabel.classList.add('disabled');
+            soundToggleLabel.classList.remove('enabled');
+        }
+    });
+
+    // Modify the triggerNotification function to respect the sound toggle
+    function triggerNotification(title, message, type, audioFile) {
+        // Create notification element
+        const notificationContainer = document.querySelector('.notification-container');
+        const notification = Utils.createElement('div', {
+            class: `notification ${type}`
+        });
+
+        const notificationTitle = Utils.createElement('div', {
+            class: 'notification-title'
+        }, title);
+
+        const notificationBody = Utils.createElement('div', {
+            class: 'notification-body'
+        }, message);
+
+        const closeButton = Utils.createElement('div', {
+            class: 'notification-close'
+        }, '×');
+
+        closeButton.addEventListener('click', () => {
+            notification.classList.add('hiding');
+            setTimeout(() => notification.remove(), 300);
+        });
+
+        notification.appendChild(notificationTitle);
+        notification.appendChild(notificationBody);
+        notification.appendChild(closeButton);
+        notificationContainer.appendChild(notification);
+
+        // Play sound if enabled
+        if (soundEnabled && audioFile) {
+            const audio = new Audio(audioFile);
+            audio.play();
+        }
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            notification.classList.add('hiding');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
 });
