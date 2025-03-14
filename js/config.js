@@ -24,17 +24,20 @@ const CONFIG = {
     // Radar settings
     RADAR: {
         opacity: 0.7,
-        refreshInterval: 300000 // 5 minutes in milliseconds
+        refreshInterval: 300000, // 5 minutes in milliseconds
+        refreshCounter: 0 // Counter to track refreshes
     },
     
     // Alert settings
     ALERTS: {
-        refreshInterval: 60000 // 1 minutes in milliseconds
+        refreshInterval: 60000, // 1 minute in milliseconds
+        refreshCounter: 0 // Counter to track refreshes
     },
     
     // SPC settings
     SPC: {
-        refreshInterval: 300000 // 5 minutes in milliseconds
+        refreshInterval: 300000, // 5 minutes in milliseconds
+        refreshCounter: 0 // Counter to track refreshes
     },
     
     // Time format settings
