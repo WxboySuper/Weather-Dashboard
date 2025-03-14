@@ -77,12 +77,15 @@ const AlertsManager = {
      * @param {Object} data - Alert data from NWS API
      */
     processAlerts: function(data) {
-        // Filter for severe weather alerts only (tornado, t-storm, flood)
+        // Filter for severe weather alerts only with specific order of importance
         const severeWeatherEvents = [
-            'tornado warning', 'tornado watch', 
-            'severe thunderstorm warning', 'severe thunderstorm watch',
-            'flash flood warning', 'flash flood watch',
-            'special weather statement', 'severe weather statement'
+            'tornado warning',
+            'severe thunderstorm warning',
+            'flash flood warning', 'flood warning', 
+            'tornado watch',
+            'severe thunderstorm watch',
+            'flash flood watch', 'flood watch',
+            'special weather statement'
         ];
         
         const validAlerts = data.features.filter(alert => {
@@ -94,6 +97,16 @@ const AlertsManager = {
         // Store the alerts
         this.activeAlerts = validAlerts.map(alert => {
             const props = alert.properties;
+            const eventLower = props.event.toLowerCase();
+            
+            // Determine priority based on alert type
+            let priority = 999;
+            severeWeatherEvents.forEach((severeEvent, index) => {
+                if (eventLower.includes(severeEvent)) {
+                    priority = Math.min(priority, index);
+                }
+            });
+            
             return {
                 id: props.id,
                 event: props.event,
@@ -106,21 +119,69 @@ const AlertsManager = {
                 effective: props.effective,
                 expires: props.expires,
                 geometry: alert.geometry,
-                type: this.getCategoryType(props.event)
+                type: this.getCategoryType(props.event),
+                priority: priority // Lower number = higher priority
             };
         });
         
-        // Sort by severity (most severe first)
-        this.activeAlerts.sort((a, b) => {
-            // Prioritize tornado warnings first, then severe t-storm, then others
-            if (a.event.toLowerCase().includes('tornado warning')) return -1;
-            if (b.event.toLowerCase().includes('tornado warning')) return 1;
-            if (a.event.toLowerCase().includes('severe thunderstorm warning')) return -1;
-            if (b.event.toLowerCase().includes('severe thunderstorm warning')) return 1;
-            
-            const severityOrder = { extreme: 0, severe: 1, moderate: 2, minor: 3, unknown: 4 };
-            return severityOrder[a.severity] - severityOrder[b.severity];
+        // Sort by priority (most severe first)
+        this.activeAlerts.sort((a, b) => a.priority - b.priority);
+        
+        // Update alert counters
+        this.updateAlertCounters();
+    },
+    
+    /**
+     * Count alerts by type and update the counter display
+     */
+    updateAlertCounters: function() {
+        // Initialize counters
+        const counters = {
+            'tornado-warning': 0,
+            'tstorm-warning': 0,
+            'flood-warning': 0,
+            'tornado-watch': 0,
+            'tstorm-watch': 0,
+            'flood-watch': 0,
+            'statement': 0
+        };
+        
+        // Count alerts by type
+        this.activeAlerts.forEach(alert => {
+            const eventLower = alert.event.toLowerCase();
+            if (eventLower.includes('tornado warning')) counters['tornado-warning']++;
+            else if (eventLower.includes('thunderstorm warning')) counters['tstorm-warning']++;
+            else if (eventLower.includes('flood warning') || eventLower.includes('flash flood warning')) counters['flood-warning']++;
+            else if (eventLower.includes('tornado watch')) counters['tornado-watch']++;
+            else if (eventLower.includes('thunderstorm watch')) counters['tstorm-watch']++;
+            else if (eventLower.includes('flood watch') || eventLower.includes('flash flood watch')) counters['flood-watch']++;
+            else if (eventLower.includes('special weather')) counters['statement']++;
         });
+        
+        // Create or update the counter display
+        const warningsPanel = document.querySelector('.warnings-panel');
+        let counterDisplay = document.getElementById('alert-counters');
+        
+        if (!counterDisplay) {
+            counterDisplay = document.createElement('div');
+            counterDisplay.id = 'alert-counters';
+            counterDisplay.className = 'alert-counters';
+            
+            // Insert after the h2 title
+            const title = warningsPanel.querySelector('h2');
+            title.parentNode.insertBefore(counterDisplay, title.nextSibling);
+        }
+        
+        // Update counter display
+        counterDisplay.innerHTML = `
+            <div class="counter-item tornado">${counters['tornado-warning']} TOR</div>
+            <div class="counter-item severe-tstorm">${counters['tstorm-warning']} SVR</div>
+            <div class="counter-item flood">${counters['flood-warning']} FFW</div>
+            <div class="counter-item watch">${counters['tornado-watch']} TOR WTCH</div>
+            <div class="counter-item watch">${counters['tstorm-watch']} SVR WTCH</div>
+            <div class="counter-item watch">${counters['flood-watch']} FFW WTCH</div>
+            <div class="counter-item other">${counters['statement']} SPS</div>
+        `;
     },
     
     /**
@@ -179,13 +240,22 @@ const AlertsManager = {
      * Update warning polygons on the map
      */
     updateWarningPolygons: function() {
-        // Clear existing warning polygons
+        // Clear existing warning polygons and watches
         RadarManager.clearWarningPolygons();
+        RadarManager.clearWatchPolygons();
         
         // Add polygons for each alert with geometry
         this.activeAlerts.forEach(alert => {
             if (alert.geometry) {
-                RadarManager.addWarningPolygon(alert.geometry, alert.event, alert.id);
+                const eventLower = alert.event.toLowerCase();
+                
+                if (eventLower.includes('watch')) {
+                    // Add as a watch polygon with lower opacity
+                    RadarManager.addWatchPolygon(alert.geometry, alert.id, alert.event);
+                } else {
+                    // Add as a warning polygon
+                    RadarManager.addWarningPolygon(alert.geometry, alert.event, alert.id);
+                }
             }
         });
     },
