@@ -5,6 +5,7 @@
 const SPCManager = {
     spcRefreshInterval: null,
     currentDay: '1',
+    currentType: 'categorical', // Default to categorical outlook
     mesoDiscussions: [],
     
     /**
@@ -25,6 +26,32 @@ const SPCManager = {
             });
         });
         
+        // Add outlook type selector (categorical/probabilistic)
+        const spcPanel = document.querySelector('.spc-panel');
+        const tabs = spcPanel.querySelector('.tabs');
+        
+        // Create the outlook type selector
+        const typeContainer = document.createElement('div');
+        typeContainer.className = 'outlook-type-selector';
+        typeContainer.innerHTML = `
+            <select id="outlook-type">
+                <option value="categorical">Categorical</option>
+                <option value="tornado">Tornado</option>
+                <option value="wind">Wind</option>
+                <option value="hail">Hail</option>
+            </select>
+        `;
+        
+        // Insert after tabs
+        tabs.insertAdjacentElement('afterend', typeContainer);
+        
+        // Set up outlook type change event
+        const typeSelector = document.getElementById('outlook-type');
+        typeSelector.addEventListener('change', (e) => {
+            this.currentType = e.target.value;
+            this.displayOutlook();
+        });
+        
         // Load initial outlook
         this.displayOutlook();
         
@@ -39,10 +66,9 @@ const SPCManager = {
     },
     
     /**
-     * Display the SPC outlook for the current selected day
+     * Display the SPC outlook for the current selected day and type
      */
     displayOutlook: function() {
-        const outlookImage = document.getElementById('outlook-image');
         const outlookDisplay = document.getElementById('outlook-display');
         
         // Add a cache-busting parameter to force a fresh image
@@ -51,28 +77,60 @@ const SPCManager = {
         // Clear any previous loading messages
         outlookDisplay.innerHTML = '<img id="outlook-image" class="spc-image" alt="Loading SPC Outlook...">';
         
-        // Set the image source based on the selected day
-        // Using the newer png format images which are higher quality
+        // Determine the correct image URL based on day and type
+        let imageUrl;
+        
         if (this.currentDay === '1') {
-            // Day 1 Categorical Outlook
-            outlookDisplay.innerHTML = '<img id="outlook-image" class="spc-image" src="' + 
-                `${CONFIG.SPC_BASE_URL}/products/outlook/day1otlk.gif?${timestamp}` + 
-                '" alt="Day 1 Convective Outlook">';
+            // Day 1 Outlooks
+            switch(this.currentType) {
+                case 'categorical':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day1otlk.gif`;
+                    break;
+                case 'tornado':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day1probotlk_torn.gif`;
+                    break;
+                case 'wind':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day1probotlk_wind.gif`;
+                    break;
+                case 'hail':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day1probotlk_hail.gif`;
+                    break;
+            }
         } else if (this.currentDay === '2') {
-            // Day 2 Categorical Outlook
-            outlookDisplay.innerHTML = '<img id="outlook-image" class="spc-image" src="' + 
-                `${CONFIG.SPC_BASE_URL}/products/outlook/day2otlk.gif?${timestamp}` + 
-                '" alt="Day 2 Convective Outlook">';
+            // Day 2 Outlooks
+            switch(this.currentType) {
+                case 'categorical':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day2otlk.gif`;
+                    break;
+                case 'tornado':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day2probotlk_torn.gif`;
+                    break;
+                case 'wind':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day2probotlk_wind.gif`;
+                    break;
+                case 'hail':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day2probotlk_hail.gif`;
+                    break;
+            }
         } else if (this.currentDay === '3') {
-            // Day 3 Categorical Outlook
-            outlookDisplay.innerHTML = '<img id="outlook-image" class="spc-image" src="' + 
-                `${CONFIG.SPC_BASE_URL}/products/outlook/day3otlk.gif?${timestamp}` + 
-                '" alt="Day 3 Convective Outlook">';
+            // Day 3 Outlooks - only categorical available
+            imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day3otlk.gif`;
         } else if (this.currentDay === '4-8') {
-            // Days 4-8 Outlook
-            outlookDisplay.innerHTML = '<img id="outlook-image" class="spc-image" src="' + 
-                `${CONFIG.SPC_BASE_URL}/products/exper/day4-8/day4-8prob.gif?${timestamp}` + 
-                '" alt="Days 4-8 Convective Outlook">';
+            // Days 4-8 Outlook - only categorical available
+            imageUrl = `${CONFIG.SPC_BASE_URL}/products/exper/day4-8/day4-8prob.gif`;
+        }
+        
+        // Set the image source
+        outlookDisplay.innerHTML = `<img id="outlook-image" class="spc-image" src="${imageUrl}?${timestamp}" 
+            alt="SPC ${this.currentDay} Outlook (${this.currentType})">`;
+        
+        // Disable type selector for days 3 and 4-8 as they only have categorical outlooks
+        const typeSelector = document.getElementById('outlook-type');
+        if (this.currentDay === '3' || this.currentDay === '4-8') {
+            typeSelector.disabled = true;
+            typeSelector.value = 'categorical';
+        } else {
+            typeSelector.disabled = false;
         }
     },
     
