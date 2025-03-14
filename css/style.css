@@ -217,6 +217,19 @@ h2 {
   margin: 0 auto;
 }
 
+.outlook-type-selector {
+  margin-bottom: 10px;
+}
+
+#outlook-type {
+  width: 100%;
+  padding: 5px;
+  background: #333;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 3px;
+}
+
 /* Mesoscale Discussion Panel */
 .meso-panel {
   overflow: hidden;
@@ -315,12 +328,90 @@ h2 {
   background-color: #00ff00;
 }
 
-.counter-item.watch {
-  background-color: #ff00ff;
+.counter-item.watch.tornado-watch {
+  background-color: #FFFF00; /* Yellow for tornado watch */
+}
+
+.counter-item.watch.tstorm-watch {
+  background-color: #FF69B4; /* Darker pink for severe thunderstorm watch */
+}
+
+.counter-item.watch.flood-watch {
+  background-color: #006400; /* Dark green for flood watch */
 }
 
 .counter-item.other {
   background-color: #cccccc;
+}
+
+/* Combined Panel (SPC/MCD) */
+.combined-panel {
+  display: flex;
+  flex-direction: column;
+  grid-column: 2;
+  overflow: hidden;
+}
+
+.panel-tabs {
+  display: flex;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.panel-tab-button {
+  flex: 1;
+  padding: 8px 12px;
+  background: #333;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.panel-tab-button.active {
+  background: #ffcc00;
+  color: #222;
+}
+
+.panel-content {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  height: calc(100% - 45px); /* Account for tab buttons */
+}
+
+.panel-content.active {
+  display: flex;
+}
+
+/* SPC Content */
+#spc-content .tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+#outlook-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+/* MCD Content */
+#mcd-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+#mcd-content .scrollable-feed {
+  height: 100%;
+  overflow-y: auto;
 }
 
 /* Responsive adjustments */
