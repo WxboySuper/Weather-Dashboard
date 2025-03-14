@@ -315,6 +315,25 @@ const AlertsManager = {
                 alertElement.appendChild(tagElement);
             }
 
+            // Add tornado-specific details if available
+            if (alert.event.toLowerCase().includes('tornado')) {
+                const descLower = alert.description.toLowerCase();
+                let tornadoDetails = '';
+
+                if (descLower.includes('observed')) {
+                    tornadoDetails = 'Observed';
+                } else if (descLower.includes('radar indicated')) {
+                    tornadoDetails = 'Radar Indicated';
+                }
+
+                if (tornadoDetails) {
+                    const tornadoDetailElement = Utils.createElement('div', {
+                        class: 'damage-threat-tag'
+                    }, tornadoDetails);
+                    alertElement.appendChild(tornadoDetailElement);
+                }
+            }
+
             const area = Utils.createElement('p', {}, alert.areaDesc);
             const time = Utils.createElement('p', {}, `Until: ${Utils.formatDate(alert.expires)}`);
 
