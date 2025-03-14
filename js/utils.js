@@ -135,5 +135,33 @@ const Utils = {
         }
         
         return element;
+    },
+
+    // Add utility function to create notification elements
+    createNotification: function(type, title, message) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+
+        const titleElement = document.createElement('div');
+        titleElement.className = 'notification-title';
+        titleElement.textContent = title;
+
+        const messageElement = document.createElement('div');
+        messageElement.className = 'notification-body';
+        messageElement.textContent = message;
+
+        const closeButton = document.createElement('div');
+        closeButton.className = 'notification-close';
+        closeButton.textContent = '×';
+        closeButton.addEventListener('click', () => {
+            notification.classList.add('hiding');
+            setTimeout(() => notification.remove(), 300);
+        });
+
+        notification.appendChild(titleElement);
+        notification.appendChild(messageElement);
+        notification.appendChild(closeButton);
+
+        return notification;
     }
 };
