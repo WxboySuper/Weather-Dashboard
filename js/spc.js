@@ -2,6 +2,8 @@
  * Storm Prediction Center data handling for the Severe Weather Monitoring Dashboard
  */
 
+let isFirstLoad = true;
+
 const SPCManager = {
     spcRefreshInterval: null,
     currentDay: '1',
@@ -12,12 +14,16 @@ const SPCManager = {
      * Initialize the SPC manager
      */
     init: function() {
+        // Ensure isFirstLoad is reset during initialization
+        isFirstLoad = true;
+
         // Set up day tab buttons (for SPC day selection)
         const dayTabButtons = document.querySelectorAll('.spc-day-tabs .tab-button');
         dayTabButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 // Update active class
-                document.querySelector('.spc-day-tabs .tab-button.active').classList.remove('active');
+                const activeButton = document.querySelector('.spc-day-tabs .tab-button.active');
+                if (activeButton) activeButton.classList.remove('active');
                 e.target.classList.add('active');
                 
                 // Update current day and refresh the outlook
@@ -31,7 +37,8 @@ const SPCManager = {
         panelTabButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 // Update active class
-                document.querySelector('.panel-tab-button.active').classList.remove('active');
+                const activeButton = document.querySelector('.panel-tab-button.active');
+                if (activeButton) activeButton.classList.remove('active');
                 e.target.classList.add('active');
                 
                 // Hide all panel content
@@ -41,7 +48,8 @@ const SPCManager = {
                 
                 // Show the selected panel content
                 const panelId = e.target.dataset.panel;
-                document.getElementById(`${panelId}-content`).classList.add('active');
+                const panelContent = document.getElementById(`${panelId}-content`);
+                if (panelContent) panelContent.classList.add('active');
                 
                 // If switching to MCD tab, make sure MCDs are loaded
                 if (panelId === 'mcd') {
@@ -193,7 +201,7 @@ const SPCManager = {
             }
         }
     },
-    
+
     /**
      * Fetch current mesoscale discussions from SPC using RSS feed as primary source
      */
@@ -203,33 +211,33 @@ const SPCManager = {
 
         try {
             mesoFeed.innerHTML = '<div class="loading">Loading mesoscale discussions...</div>';
-            
+
             const response = await fetch(`https://www.spc.noaa.gov/products/spcmdrss.xml?${new Date().getTime()}`);
             if (!response.ok) {
                 throw new Error(`Failed to fetch from RSS: ${response.status}`);
             }
-            
+
             const text = await response.text();
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(text, "text/xml");
             const items = xmlDoc.querySelectorAll('item');
-            
+
+            const previousMCDs = this.mesoDiscussions.map(meso => meso.mdNumber);
             this.mesoDiscussions = [];
-            
+
             if (items && items.length > 0) {
+                let delay = 0;
                 items.forEach(item => {
                     try {
                         const title = item.querySelector('title').textContent;
                         const description = item.querySelector('description').textContent;
                         const pubDate = item.querySelector('pubDate').textContent;
-                        
-                        // Match any MD number pattern in the title (more flexible)
+
                         const mdMatch = title.match(/MD\s*(\d+)/i);
                         if (mdMatch) {
                             const mdNumber = mdMatch[1];
-                            // Pad the MD number to 4 digits
                             const paddedMdNumber = mdNumber.padStart(4, '0');
-                            
+
                             this.mesoDiscussions.push({
                                 title: `MD #${mdNumber}`,
                                 link: `https://www.spc.noaa.gov/products/md/md${paddedMdNumber}.html`,
@@ -237,22 +245,29 @@ const SPCManager = {
                                 mdNumber: paddedMdNumber,
                                 pubDate: pubDate
                             });
+
+                            if (!isFirstLoad && !previousMCDs.includes(paddedMdNumber)) {
+                                setTimeout(() => {
+                                    this.triggerNotification(`New MCD #${mdNumber}`, `A new Mesoscale Discussion (MCD #${mdNumber}) has been issued.`, 'mcd');
+                                }, delay);
+                                delay += 1000; // Add 1 second delay between notifications
+                            }
                         }
                     } catch (itemError) {
                         console.error('Error processing RSS item:', itemError);
                     }
                 });
             }
-            
+
             if (this.mesoDiscussions.length === 0) {
-                // If no MCDs found in RSS feed, try direct MD page as backup
                 await this.fetchMCDsFromDirectPage();
             } else {
                 this.displayMesoscaleDiscussions();
             }
+
+            isFirstLoad = false;
         } catch (error) {
             console.error('Error fetching from RSS feed:', error);
-            // Try direct MD page as backup
             await this.fetchMCDsFromDirectPage();
         }
     },
@@ -355,6 +370,49 @@ const SPCManager = {
             
             mesoFeed.appendChild(mesoElement);
         });
+    },
+    
+    /**
+     * Add a function to trigger notifications
+     */
+    triggerNotification: function(title, message, type) {
+        // Create notification element
+        const notificationContainer = document.querySelector('.notification-container');
+        const notification = Utils.createElement('div', {
+            class: `notification ${type}`
+        });
+
+        const notificationTitle = Utils.createElement('div', {
+            class: 'notification-title'
+        }, title);
+
+        const notificationBody = Utils.createElement('div', {
+            class: 'notification-body'
+        }, message);
+
+        const closeButton = Utils.createElement('div', {
+            class: 'notification-close'
+        }, '×');
+
+        closeButton.addEventListener('click', () => {
+            notification.classList.add('hiding');
+            setTimeout(() => notification.remove(), 300);
+        });
+
+        notification.appendChild(notificationTitle);
+        notification.appendChild(notificationBody);
+        notification.appendChild(closeButton);
+        notificationContainer.appendChild(notification);
+
+        // Play sound
+        const audio = new Audio('assets/notification.mp3');
+        audio.play();
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            notification.classList.add('hiding');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
     },
     
     /**
