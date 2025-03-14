@@ -12,12 +12,12 @@ const SPCManager = {
      * Initialize the SPC manager
      */
     init: function() {
-        // Set up day tab buttons
-        const tabButtons = document.querySelectorAll('.tab-button');
-        tabButtons.forEach(button => {
+        // Set up day tab buttons (for SPC day selection)
+        const dayTabButtons = document.querySelectorAll('.spc-day-tabs .tab-button');
+        dayTabButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 // Update active class
-                document.querySelector('.tab-button.active').classList.remove('active');
+                document.querySelector('.spc-day-tabs .tab-button.active').classList.remove('active');
                 e.target.classList.add('active');
                 
                 // Update current day and refresh the outlook
@@ -26,31 +26,41 @@ const SPCManager = {
             });
         });
         
-        // Add outlook type selector (categorical/probabilistic)
-        const spcPanel = document.querySelector('.spc-panel');
-        const tabs = spcPanel.querySelector('.tabs');
-        
-        // Create the outlook type selector
-        const typeContainer = document.createElement('div');
-        typeContainer.className = 'outlook-type-selector';
-        typeContainer.innerHTML = `
-            <select id="outlook-type">
-                <option value="categorical">Categorical</option>
-                <option value="tornado">Tornado</option>
-                <option value="wind">Wind</option>
-                <option value="hail">Hail</option>
-            </select>
-        `;
-        
-        // Insert after tabs
-        tabs.insertAdjacentElement('afterend', typeContainer);
-        
-        // Set up outlook type change event
-        const typeSelector = document.getElementById('outlook-type');
-        typeSelector.addEventListener('change', (e) => {
-            this.currentType = e.target.value;
-            this.displayOutlook();
+        // Set up panel tab buttons (for switching between SPC and MCD)
+        const panelTabButtons = document.querySelectorAll('.panel-tab-button');
+        panelTabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                // Update active class
+                document.querySelector('.panel-tab-button.active').classList.remove('active');
+                e.target.classList.add('active');
+                
+                // Hide all panel content
+                document.querySelectorAll('.panel-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Show the selected panel content
+                const panelId = e.target.dataset.panel;
+                document.getElementById(`${panelId}-content`).classList.add('active');
+                
+                // If switching to MCD tab, make sure MCDs are loaded
+                if (panelId === 'mcd') {
+                    this.fetchMesoscaleDiscussions();
+                }
+            });
         });
+        
+        // Set up outlook type selector
+        const typeSelector = document.getElementById('outlook-type');
+        if (typeSelector) {
+            typeSelector.addEventListener('change', (e) => {
+                this.currentType = e.target.value;
+                this.displayOutlook();
+            });
+            
+            // Make sure the selector shows the current type
+            typeSelector.value = this.currentType;
+        }
         
         // Load initial outlook
         this.displayOutlook();
@@ -60,8 +70,16 @@ const SPCManager = {
         
         // Set up refresh interval
         this.spcRefreshInterval = setInterval(() => {
-            this.displayOutlook();
-            this.fetchMesoscaleDiscussions();
+            // Only refresh the active tab content
+            const activePanel = document.querySelector('.panel-content.active');
+            if (activePanel) {
+                const panelId = activePanel.id;
+                if (panelId === 'spc-content') {
+                    this.displayOutlook();
+                } else if (panelId === 'mcd-content') {
+                    this.fetchMesoscaleDiscussions();
+                }
+            }
         }, CONFIG.SPC.refreshInterval);
     },
     
@@ -70,6 +88,7 @@ const SPCManager = {
      */
     displayOutlook: function() {
         const outlookDisplay = document.getElementById('outlook-display');
+        if (!outlookDisplay) return;
         
         // Add a cache-busting parameter to force a fresh image
         const timestamp = new Date().getTime();
@@ -95,6 +114,8 @@ const SPCManager = {
                 case 'hail':
                     imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day1probotlk_hail.gif`;
                     break;
+                default:
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day1otlk.gif`;
             }
         } else if (this.currentDay === '2') {
             // Day 2 Outlooks
@@ -111,26 +132,65 @@ const SPCManager = {
                 case 'hail':
                     imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day2probotlk_hail.gif`;
                     break;
+                default:
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day2otlk.gif`;
             }
         } else if (this.currentDay === '3') {
-            // Day 3 Outlooks - only categorical available
-            imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day3otlk.gif`;
+            // Day 3 Outlooks - both categorical and probabilistic are available
+            switch(this.currentType) {
+                case 'categorical':
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day3otlk.gif`;
+                    break;
+                case 'tornado':
+                case 'wind':
+                case 'hail':
+                    // Day 3 only has a single probabilistic outlook
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day3prob.gif`;
+                    break;
+                default:
+                    imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day3otlk.gif`;
+            }
         } else if (this.currentDay === '4-8') {
-            // Days 4-8 Outlook - only categorical available
-            imageUrl = `${CONFIG.SPC_BASE_URL}/products/exper/day4-8/day4-8prob.gif`;
+            // Days 4-8 Outlook - fixed URL to correct location
+            imageUrl = `${CONFIG.SPC_BASE_URL}/products/outlook/day4-8/day4-8prob.gif`;
         }
         
         // Set the image source
-        outlookDisplay.innerHTML = `<img id="outlook-image" class="spc-image" src="${imageUrl}?${timestamp}" 
-            alt="SPC ${this.currentDay} Outlook (${this.currentType})">`;
+        const img = new Image();
+        img.onload = function() {
+            outlookDisplay.innerHTML = '';
+            outlookDisplay.appendChild(img);
+        };
+        img.onerror = function() {
+            outlookDisplay.innerHTML = '<div class="error">Failed to load outlook image. Will retry.</div>';
+        };
+        img.src = `${imageUrl}?${timestamp}`;
+        img.id = 'outlook-image';
+        img.className = 'spc-image';
+        img.alt = `SPC ${this.currentDay} Outlook (${this.currentType})`;
         
-        // Disable type selector for days 3 and 4-8 as they only have categorical outlooks
+        // Handle selector for days 3 - allow probabilistic but set single option
         const typeSelector = document.getElementById('outlook-type');
-        if (this.currentDay === '3' || this.currentDay === '4-8') {
-            typeSelector.disabled = true;
-            typeSelector.value = 'categorical';
-        } else {
-            typeSelector.disabled = false;
+        if (typeSelector) {
+            if (this.currentDay === '3') {
+                typeSelector.disabled = false;
+                // If any probabilistic type is selected, they're all the same for day 3
+                if (this.currentType !== 'categorical' && 
+                    (this.currentType === 'tornado' || this.currentType === 'wind' || this.currentType === 'hail')) {
+                    // Just use a single value for all probabilistic types on day 3
+                    this.currentType = 'tornado';
+                    typeSelector.value = this.currentType;
+                } else {
+                    typeSelector.value = this.currentType;
+                }
+            } else if (this.currentDay === '4-8') {
+                typeSelector.disabled = true;
+                typeSelector.value = 'categorical';
+                this.currentType = 'categorical';
+            } else {
+                typeSelector.disabled = false;
+                typeSelector.value = this.currentType;
+            }
         }
     },
     
@@ -138,79 +198,127 @@ const SPCManager = {
      * Fetch current mesoscale discussions from SPC
      */
     fetchMesoscaleDiscussions: async function() {
+        const mesoFeed = document.getElementById('meso-feed');
+        if (!mesoFeed) return;
+        
         try {
-            // Since the CORS proxy might be causing issues, we'll use direct SPC JSON data
-            // Fetch latest mesoscale discussions directly from SPC via a more reliable method
-            const mesoResponse = await fetch(`https://www.spc.noaa.gov/products/md/md.json?${new Date().getTime()}`);
+            mesoFeed.innerHTML = '<div class="loading">Loading mesoscale discussions...</div>';
             
-            if (!mesoResponse.ok) {
-                throw new Error(`Failed to fetch mesoscale discussions: ${mesoResponse.status}`);
+            // Use NOAA's XML feed directly for more reliable access
+            const response = await fetch(`https://www.spc.noaa.gov/products/md/rss.xml?${new Date().getTime()}`);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch mesoscale discussions: ${response.status}`);
             }
             
-            const mesoData = await mesoResponse.json();
+            const text = await response.text();
+            
+            // Parse the XML
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(text, "text/xml");
+            const items = xmlDoc.querySelectorAll('item');
             
             // Process the discussions
             this.mesoDiscussions = [];
             
-            if (mesoData && Array.isArray(mesoData)) {
-                // Most recent MDs come first
-                mesoData.forEach(md => {
-                    if (md && md.id) {
-                        const mdNumber = md.id;
-                        const title = md.title || 'Mesoscale Discussion';
-                        const link = `https://www.spc.noaa.gov/products/md/md${mdNumber}.html`;
-                        const pubDate = md.date || new Date().toUTCString();
+            if (items && items.length > 0) {
+                items.forEach(item => {
+                    try {
+                        const title = item.querySelector('title').textContent;
+                        const link = item.querySelector('link').textContent;
+                        const description = item.querySelector('description').textContent;
+                        const pubDate = item.querySelector('pubDate').textContent;
+                        
+                        // Extract MD number from title (format: "Mesoscale Discussion 123")
+                        const mdMatch = title.match(/Mesoscale Discussion (\d+)/);
+                        const mdNumber = mdMatch ? mdMatch[1] : 'Unknown';
                         
                         this.mesoDiscussions.push({
-                            title: `Mesoscale Discussion ${mdNumber}${title ? ' - ' + title : ''}`,
+                            title,
                             link,
+                            description,
                             mdNumber,
                             pubDate
                         });
+                    } catch (itemError) {
+                        console.error('Error processing MCD item:', itemError);
                     }
                 });
-            } else {
-                // Fallback: try the traditional method with direct HTML scraping
-                await this.fetchMesoscaleDiscussionsFallback();
             }
             
-            // Display the discussions
-            this.displayMesoscaleDiscussions();
+            if (this.mesoDiscussions.length === 0) {
+                // Try alternative method - fetch from WPC feed which sometimes includes SPC MCDs
+                await this.fetchMCDsFromAlternateSource();
+            } else {
+                // Display the discussions
+                this.displayMesoscaleDiscussions();
+            }
         } catch (error) {
             console.error('Error fetching mesoscale discussions:', error);
-            // Try fallback method
-            try {
-                await this.fetchMesoscaleDiscussionsFallback();
-                this.displayMesoscaleDiscussions();
-            } catch (fallbackError) {
-                console.error('Error in fallback mesoscale discussions fetch:', fallbackError);
-                document.getElementById('meso-feed').innerHTML = '<div class="error">Error loading mesoscale discussions. Will retry.</div>';
-            }
+            // Try alternative source
+            await this.fetchMCDsFromAlternateSource();
         }
     },
-    
+
     /**
-     * Fallback method to fetch mesoscale discussions
+     * Try to fetch MCDs from an alternative source
      */
-    fetchMesoscaleDiscussionsFallback: async function() {
-        // Manually create fake data to demonstrate functionality since we can't reliably fetch
-        // This would be replaced with actual data in a production environment
-        const now = new Date();
-        
-        this.mesoDiscussions = [
-            {
-                title: 'Mesoscale Discussion 1234 - Central Plains',
-                link: 'https://www.spc.noaa.gov/products/md/md1234.html',
-                mdNumber: '1234',
-                pubDate: now.toUTCString()
-            },
-            {
-                title: 'Mesoscale Discussion 1233 - Southeast',
-                link: 'https://www.spc.noaa.gov/products/md/md1233.html', 
-                mdNumber: '1233',
-                pubDate: new Date(now.getTime() - 3600000).toUTCString()  // 1 hour ago
+    fetchMCDsFromAlternateSource: async function() {
+        try {
+            // Try direct access to MCD index page
+            const response = await fetch(`https://www.spc.noaa.gov/products/md/?${new Date().getTime()}`);
+            const html = await response.text();
+            
+            // Parse the HTML to find active MCDs
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // Look for MD links - they follow a pattern like "md0123.html"
+            const mdLinks = tempDiv.querySelectorAll('a[href^="md"]');
+            this.mesoDiscussions = [];
+            
+            if (mdLinks && mdLinks.length > 0) {
+                // Process only the most recent MCDs (up to 5)
+                const recentLinks = Array.from(mdLinks).slice(0, 5);
+                
+                recentLinks.forEach(link => {
+                    const href = link.getAttribute('href');
+                    const mdMatch = href.match(/md(\d+)\.html/);
+                    
+                    if (mdMatch) {
+                        const mdNumber = mdMatch[1];
+                        // Find nearby text for title, or use generic title
+                        let title = `Mesoscale Discussion ${mdNumber}`;
+                        if (link.textContent && link.textContent.trim()) {
+                            title = link.textContent.trim();
+                        }
+                        
+                        this.mesoDiscussions.push({
+                            title: title,
+                            link: `https://www.spc.noaa.gov/products/md/${href}`,
+                            mdNumber,
+                            pubDate: new Date().toUTCString() // No date info, use current
+                        });
+                    }
+                });
             }
-        ];
+            
+            if (this.mesoDiscussions.length === 0) {
+                // If still no MCDs, show "No active MCDs" message
+                const mesoFeed = document.getElementById('meso-feed');
+                if (mesoFeed) {
+                    mesoFeed.innerHTML = '<div class="no-meso">No active mesoscale discussions found.</div>';
+                }
+            } else {
+                this.displayMesoscaleDiscussions();
+            }
+        } catch (error) {
+            console.error('Error fetching from alternate source:', error);
+            const mesoFeed = document.getElementById('meso-feed');
+            if (mesoFeed) {
+                mesoFeed.innerHTML = '<div class="error">Unable to load mesoscale discussions.</div>';
+            }
+        }
     },
     
     /**
@@ -218,6 +326,8 @@ const SPCManager = {
      */
     displayMesoscaleDiscussions: function() {
         const mesoFeed = document.getElementById('meso-feed');
+        if (!mesoFeed) return;
+        
         mesoFeed.innerHTML = '';
         
         if (this.mesoDiscussions.length === 0) {
