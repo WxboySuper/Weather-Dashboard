@@ -85,7 +85,6 @@ const AlertsManager = {
             'tornado watch',
             'severe thunderstorm watch',
             'flash flood watch', 'flood watch',
-            'special weather statement'
         ];
         
         const validAlerts = data.features.filter(alert => {
@@ -143,7 +142,6 @@ const AlertsManager = {
             'tornado-watch': 0,
             'tstorm-watch': 0,
             'flood-watch': 0,
-            'statement': 0
         };
         
         // Count alerts by type
@@ -155,7 +153,6 @@ const AlertsManager = {
             else if (eventLower.includes('tornado watch')) counters['tornado-watch']++;
             else if (eventLower.includes('thunderstorm watch')) counters['tstorm-watch']++;
             else if (eventLower.includes('flood watch') || eventLower.includes('flash flood watch')) counters['flood-watch']++;
-            else if (eventLower.includes('special weather')) counters['statement']++;
         });
         
         // Create or update the counter display
@@ -180,7 +177,6 @@ const AlertsManager = {
             <div class="counter-item watch">${counters['tornado-watch']} TOR WTCH</div>
             <div class="counter-item watch">${counters['tstorm-watch']} SVR WTCH</div>
             <div class="counter-item watch">${counters['flood-watch']} FFW WTCH</div>
-            <div class="counter-item other">${counters['statement']} SPS</div>
         `;
     },
     
