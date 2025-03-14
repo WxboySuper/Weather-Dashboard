@@ -24,7 +24,7 @@ const CONFIG = {
     // Radar settings
     RADAR: {
         opacity: 0.7,
-        refreshInterval: 300000, // 5 minutes in milliseconds
+        refreshInterval: 30000, // 1 minutes in milliseconds
         refreshCounter: 0 // Counter to track refreshes
     },
     
