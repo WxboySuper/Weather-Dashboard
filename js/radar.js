@@ -5,8 +5,10 @@
 const RadarManager = {
     map: null,
     radarLayer: null,
+    watchLayers: {},
     radarRefreshInterval: null,
     currentProduct: 'reflectivity',
+    currentMapStyle: 'dark',
     
     /**
      * Initialize the radar map
@@ -24,12 +26,33 @@ const RadarManager = {
             position: 'topright'
         }).addTo(this.map);
         
-        // Add dark theme map tiles
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: CONFIG.MAP.maxZoom
-        }).addTo(this.map);
+        // Add map style selector to the radar controls
+        const radarControls = document.querySelector('.radar-controls');
+        
+        // Add map style selector
+        const mapStyleSelector = document.createElement('select');
+        mapStyleSelector.id = 'map-style';
+        mapStyleSelector.innerHTML = `
+            <option value="dark">Dark</option>
+            <option value="streets">Streets</option>
+            <option value="satellite">Satellite</option>
+            <option value="terrain">Terrain</option>
+        `;
+        
+        const mapStyleLabel = document.createElement('label');
+        mapStyleLabel.textContent = 'Map Style: ';
+        mapStyleLabel.appendChild(mapStyleSelector);
+        
+        radarControls.appendChild(mapStyleLabel);
+        
+        // Set up map style change event
+        mapStyleSelector.addEventListener('change', (e) => {
+            this.currentMapStyle = e.target.value;
+            this.updateMapStyle();
+        });
+        
+        // Initial map style
+        this.updateMapStyle();
         
         // Add state and county boundaries
         fetch('https://raw.githubusercontent.com/Johan-dutoit/us-states-counties-geojson/master/states.json')
@@ -60,6 +83,60 @@ const RadarManager = {
         this.radarRefreshInterval = setInterval(() => {
             this.updateRadar();
         }, CONFIG.RADAR.refreshInterval);
+    },
+    
+    /**
+     * Update the map style based on user selection
+     */
+    updateMapStyle: function() {
+        // Remove existing tile layer
+        this.map.eachLayer((layer) => {
+            if (layer instanceof L.TileLayer && !layer._url.includes('mesonet.agron.iastate.edu')) {
+                this.map.removeLayer(layer);
+            }
+        });
+        
+        // Add new tile layer based on selected style
+        let tileLayer;
+        
+        switch(this.currentMapStyle) {
+            case 'streets':
+                tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: CONFIG.MAP.maxZoom
+                });
+                break;
+            case 'satellite':
+                tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                    maxZoom: CONFIG.MAP.maxZoom
+                });
+                break;
+            case 'terrain':
+                tileLayer = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png', {
+                    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    subdomains: 'abcd',
+                    maxZoom: CONFIG.MAP.maxZoom
+                });
+                break;
+            case 'dark':
+            default:
+                tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: 'abcd',
+                    maxZoom: CONFIG.MAP.maxZoom
+                });
+                break;
+        }
+        
+        // Add the base map and ensure it's at the bottom
+        tileLayer.addTo(this.map);
+        tileLayer.bringToBack();
+        
+        // Make sure radar is on top if it exists
+        if (this.radarLayer) {
+            this.radarLayer.bringToFront();
+        }
     },
     
     /**
@@ -150,6 +227,48 @@ const RadarManager = {
     },
     
     /**
+     * Add watch polygon to the map
+     * @param {Object} geometry - GeoJSON geometry object
+     * @param {string} id - Watch ID
+     * @param {string} type - Watch type (tornado, severe thunderstorm, etc.)
+     */
+    addWatchPolygon: function(geometry, id, type) {
+        let color;
+        
+        // Set color based on watch type
+        const typeLower = type.toLowerCase();
+        if (typeLower.includes('tornado')) {
+            color = '#FFFF00'; // Yellow for tornado watches
+        } else if (typeLower.includes('thunderstorm')) {
+            color = '#FF69B4'; // Darker pink for severe thunderstorm watches
+        } else if (typeLower.includes('flood') || typeLower.includes('flash flood')) {
+            color = '#006400'; // Dark green for flood watches
+        } else {
+            color = '#FFA500'; // Orange for other watches
+        }
+        
+        // Add the polygon to the map
+        const watchLayer = L.geoJSON(geometry, {
+            style: {
+                color: color,
+                weight: 2,
+                opacity: 0.7,
+                fillColor: color,
+                fillOpacity: 0.15
+            }
+        });
+        
+        // Store the watch layer by ID for later reference
+        this.watchLayers[id] = watchLayer;
+        
+        // Add to map
+        watchLayer.addTo(this.map);
+        
+        // Make sure warnings stay on top of watches
+        Object.values(this.watchLayers).forEach(layer => layer.bringToBack());
+    },
+    
+    /**
      * Clear all warning polygons from the map
      */
     clearWarningPolygons: function() {
@@ -158,6 +277,16 @@ const RadarManager = {
                 this.map.removeLayer(layer);
             }
         });
+    },
+    
+    /**
+     * Clear all watch polygons from the map
+     */
+    clearWatchPolygons: function() {
+        Object.values(this.watchLayers).forEach(layer => {
+            this.map.removeLayer(layer);
+        });
+        this.watchLayers = {};
     },
     
     /**
