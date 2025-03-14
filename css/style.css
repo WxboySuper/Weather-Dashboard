@@ -1,0 +1,278 @@
+/* General Styling */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121212;
+  color: #f5f5f5;
+  line-height: 1.6;
+}
+
+.dashboard {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+header {
+  background-color: #1a1a1a;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #ffcc00;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #ffcc00;
+}
+
+.time-display {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* Dashboard Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 15px;
+  padding: 15px;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.dashboard-panel {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 5px;
+  padding: 15px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Radar Panel */
+.radar-panel {
+  grid-row: span 2;
+}
+
+.map-container {
+  width: 100%;
+  flex-grow: 1;
+  background: #222;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.radar-controls {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.radar-controls select {
+  padding: 5px;
+  background: #333;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 3px;
+}
+
+/* Warning Feed */
+.warnings-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-controls {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 15px;
+}
+
+.filter-controls label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+}
+
+.scrollable-feed {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.warning-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  border-left: 4px solid;
+  background-color: #2a2a2a;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.warning-item:hover {
+  background-color: #333;
+}
+
+.warning-item.tornado {
+  border-left-color: #ff0000;
+}
+
+.warning-item.severe-tstorm {
+  border-left-color: #ffff00;
+}
+
+.warning-item.flood {
+  border-left-color: #00ff00;
+}
+
+.warning-item.winter {
+  border-left-color: #00ffff;
+}
+
+.warning-item.watch {
+  border-left-color: #ff00ff;
+}
+
+.warning-item h3 {
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+}
+
+.warning-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+/* SPC Outlook Panel */
+.tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.tab-button {
+  padding: 5px 10px;
+  background: #333;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.tab-button.active {
+  background: #ffcc00;
+  color: #222;
+}
+
+.spc-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Mesoscale Discussion Panel */
+.meso-panel {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.meso-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  background-color: #2a2a2a;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.meso-item:hover {
+  background-color: #333;
+}
+
+.meso-item h3 {
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+}
+
+.meso-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  overflow-y: auto;
+}
+
+.modal-content {
+  background-color: #1e1e1e;
+  margin: 5% auto;
+  padding: 20px;
+  border: 1px solid #333;
+  border-radius: 5px;
+  width: 80%;
+  max-width: 800px;
+}
+
+.close-button {
+  float: right;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  color: #ffcc00;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .radar-panel {
+    grid-row: auto;
+  }
+}
