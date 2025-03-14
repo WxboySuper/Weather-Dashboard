@@ -50,8 +50,8 @@ h2 {
 /* Dashboard Layout */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: 3fr 2fr;
+  grid-template-rows: 1fr 1fr;
   gap: 15px;
   padding: 15px;
   flex-grow: 1;
@@ -101,6 +101,8 @@ h2 {
 .warnings-panel {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  max-height: none;
 }
 
 .filter-controls {
@@ -120,6 +122,7 @@ h2 {
   flex-grow: 1;
   overflow-y: auto;
   padding-right: 5px;
+  max-height: calc(100% - 125px); /* Adjust based on header and filters height */
 }
 
 .warning-item {
@@ -186,6 +189,24 @@ h2 {
 .tab-button.active {
   background: #ffcc00;
   color: #222;
+}
+
+.spc-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 100%;
+}
+
+#outlook-display {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  min-height: calc(100% - 50px);
 }
 
 .spc-image {
@@ -264,6 +285,42 @@ h2 {
   text-align: center;
   padding: 20px;
   color: #999;
+}
+
+/* Alert Counters */
+.alert-counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+}
+
+.counter-item {
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-weight: bold;
+  color: black;
+}
+
+.counter-item.tornado {
+  background-color: #ff0000;
+}
+
+.counter-item.severe-tstorm {
+  background-color: #ffff00;
+}
+
+.counter-item.flood {
+  background-color: #00ff00;
+}
+
+.counter-item.watch {
+  background-color: #ff00ff;
+}
+
+.counter-item.other {
+  background-color: #cccccc;
 }
 
 /* Responsive adjustments */
