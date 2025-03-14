@@ -156,22 +156,24 @@ const AlertsManager = {
                 // Check for tornado damage threat tags
                 if (descLower.includes('tornado damage threat')) {
                     if (descLower.includes('catastrophic')) damageThreatTag = 'CATASTROPHIC DAMAGE THREAT';
-                    else if (descLower.includes('considerable')) damageThreatTag = 'CONSIDERABLE DAMAGE THREAT';
-                    else if (descLower.includes('radar indicated')) damageThreatTag = 'RADAR INDICATED';
+                    else if (descLower.includes('considerable')) damageThreatTag = 'PARTICULARILY DANGEROUS SITUATION';
+                    else if (descLower.includes('catastrophic')) damageThreatTag = 'TORNADO EMERGENCY';
+                }
+                if (descLower.includes('tornado damage threat')) {
+                    if (descLower.includes('radar indicated')) damageThreatTag = 'RADAR INDICATED';
                     else if (descLower.includes('observed')) damageThreatTag = 'OBSERVED';
                 }
                 // Check for thunderstorm damage threat tags
                 else if (eventLower.includes('thunderstorm')) {
                     if (descLower.includes('destructive')) damageThreatTag = 'DESTRUCTIVE DAMAGE THREAT';
                     else if (descLower.includes('considerable')) damageThreatTag = 'CONSIDERABLE DAMAGE THREAT';
-                    else if (descLower.includes('significant')) damageThreatTag = 'SIGNIFICANT DAMAGE THREAT';
-                    else if (descLower.includes('baseline')) damageThreatTag = 'BASE DAMAGE THREAT';
+                    else if (descLower.includes('tornado')) damageThreatTag = 'TORNADO POSSIBLE';
                 }
                 // Check for flash flood damage threat tags
                 else if (eventLower.includes('flash flood')) {
                     if (descLower.includes('flash flood emergency')) damageThreatTag = 'FLASH FLOOD EMERGENCY';
                     else if (descLower.includes('considerable')) damageThreatTag = 'CONSIDERABLE FLOOD THREAT';
-                    else if (descLower.includes('catastrophic')) damageThreatTag = 'CATASTROPHIC FLOOD';
+                    else if (descLower.includes('catastrophic')) damageThreatTag = 'FLASH FLOOD EMERGENCY';
                 }
             }
 
@@ -316,13 +318,17 @@ const AlertsManager = {
             }
 
             // Add tornado-specific details if available
+            // Add debugging logs to verify if 'observed' is present in the description
             if (alert.event.toLowerCase().includes('tornado')) {
                 const descLower = alert.description.toLowerCase();
+                console.log(`Processing tornado alert: ${alert.id}, Description: ${descLower}`); // Debugging log
                 let tornadoDetails = '';
 
-                if (descLower.includes('observed')) {
+                if (descLower.includes('confirmed')) {
+                    console.log(`'Observed' found in description for alert: ${alert.id}`); // Debugging log
                     tornadoDetails = 'Observed';
                 } else if (descLower.includes('radar indicated')) {
+                    console.log(`'Radar Indicated' found in description for alert: ${alert.id}`); // Debugging log
                     tornadoDetails = 'Radar Indicated';
                 }
 
