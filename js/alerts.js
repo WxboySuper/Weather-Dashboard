@@ -6,6 +6,8 @@ const AlertsManager = {
     alertsRefreshInterval: null,
     activeAlerts: [],
     activeFilters: ['warning', 'watch', 'advisory'],
+    // Add a flag to track the first load
+    isFirstLoad: true,
 
     /**
      * Initialize the alerts manager
@@ -56,10 +58,39 @@ const AlertsManager = {
     fetchAlerts: async function() {
         try {
             const alertsUrl = `${CONFIG.NWS_API_BASE}/alerts/active?status=actual`;
-            const data = await Utils.fetchWithTimeout(alertsUrl);
+
+            // Set a timeout for the fetch request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+
+            const response = await fetch(alertsUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch alerts: ${response.status}`);
+            }
+
+            const data = await response.json();
 
             // Process and store alerts
+            const previousAlerts = this.activeAlerts.map(alert => alert.id);
             this.processAlerts(data);
+
+            // Trigger notifications for new alerts only after the first load
+            if (!this.isFirstLoad) {
+                let delay = 0;
+                this.activeAlerts.forEach(alert => {
+                    if (!previousAlerts.includes(alert.id)) {
+                        setTimeout(() => {
+                            const audioFile = this.getAudioFileForAlert(alert);
+                            this.triggerNotification(alert.event, alert.headline, 'alert', audioFile);
+                        }, delay);
+                        delay += 1000; // Add 1 second delay between notifications
+                    }
+                });
+            } else {
+                this.isFirstLoad = false;
+            }
 
             // Display the alerts
             this.displayAlerts();
@@ -69,6 +100,25 @@ const AlertsManager = {
         } catch (error) {
             console.error('Error fetching alerts:', error);
             document.getElementById('warning-feed').innerHTML = '<div class="error">Error loading alert data. Will retry.</div>';
+        }
+    },
+
+    /**
+     * Get the appropriate audio file for an alert
+     * @param {Object} alert - Alert object
+     * @returns {string} - Path to the audio file
+     */
+    getAudioFileForAlert: function(alert) {
+        const eventLower = alert.event.toLowerCase();
+
+        if (eventLower.includes('tornado warning')) {
+            return 'assets/tor-notification.mp3';
+        } else if (eventLower.includes('severe thunderstorm warning') || eventLower.includes('flash flood warning')) {
+            return 'assets/alert-notification.mp3';
+        } else if (eventLower.includes('watch')) {
+            return 'assets/watch-notification.mp3';
+        } else {
+            return 'assets/info-notification.mp3';
         }
     },
 
@@ -356,5 +406,46 @@ const AlertsManager = {
         if (this.alertsRefreshInterval) {
             clearInterval(this.alertsRefreshInterval);
         }
+    },
+
+    // Add a function to trigger notifications
+    triggerNotification: function(title, message, type, audioFile) {
+        // Create notification element
+        const notificationContainer = document.querySelector('.notification-container');
+        const notification = Utils.createElement('div', {
+            class: `notification ${type}`
+        });
+
+        const notificationTitle = Utils.createElement('div', {
+            class: 'notification-title'
+        }, title);
+
+        const notificationBody = Utils.createElement('div', {
+            class: 'notification-body'
+        }, message);
+
+        const closeButton = Utils.createElement('div', {
+            class: 'notification-close'
+        }, '×');
+
+        closeButton.addEventListener('click', () => {
+            notification.classList.add('hiding');
+            setTimeout(() => notification.remove(), 300);
+        });
+
+        notification.appendChild(notificationTitle);
+        notification.appendChild(notificationBody);
+        notification.appendChild(closeButton);
+        notificationContainer.appendChild(notification);
+
+        // Play sound
+        const audio = new Audio(audioFile);
+        audio.play();
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            notification.classList.add('hiding');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
     }
 };
