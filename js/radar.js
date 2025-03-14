@@ -8,7 +8,7 @@ const RadarManager = {
     watchLayers: {},
     radarRefreshInterval: null,
     currentProduct: 'reflectivity',
-    currentMapStyle: 'dark',
+    currentMapStyle: 'streets',
 
     /**
      * Initialize the radar map
