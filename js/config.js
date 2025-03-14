@@ -29,12 +29,12 @@ const CONFIG = {
     
     // Alert settings
     ALERTS: {
-        refreshInterval: 120000 // 2 minutes in milliseconds
+        refreshInterval: 60000 // 1 minutes in milliseconds
     },
     
     // SPC settings
     SPC: {
-        refreshInterval: 600000 // 10 minutes in milliseconds
+        refreshInterval: 300000 // 5 minutes in milliseconds
     },
     
     // Time format settings
