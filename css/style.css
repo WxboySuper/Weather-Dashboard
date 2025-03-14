@@ -321,7 +321,7 @@ h2 {
 }
 
 .counter-item.severe-tstorm {
-  background-color: #ffff00;
+  background-color: #e2cc00;
 }
 
 .counter-item.flood {
@@ -333,7 +333,7 @@ h2 {
 }
 
 .counter-item.watch.tstorm-watch {
-  background-color: #FF69B4; /* Darker pink for severe thunderstorm watch */
+  background-color: #da5798; /* Darker pink for severe thunderstorm watch */
 }
 
 .counter-item.watch.flood-watch {
@@ -419,8 +419,49 @@ h2 {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .radar-panel {
     grid-row: auto;
   }
+}
+
+/* Damage Threat Tag styles */
+.damage-threat-tag {
+  background-color: #ff3333;
+  color: white;
+  font-weight: bold;
+  padding: 3px 6px;
+  margin: 5px 0;
+  border-radius: 3px;
+  display: inline-block;
+  font-size: 0.8rem;
+}
+
+/* Different colors for different threat levels */
+.damage-threat-tag:contains("CATASTROPHIC") {
+  background-color: #800000; /* Dark red */
+}
+
+.damage-threat-tag:contains("DESTRUCTIVE") {
+  background-color: #800000; /* Dark red */
+}
+
+.damage-threat-tag:contains("EMERGENCY") {
+  background-color: #800000; /* Dark red */
+}
+
+.damage-threat-tag:contains("CONSIDERABLE") {
+  background-color: #ff3333; /* Bright red */
+}
+
+.damage-threat-tag:contains("SIGNIFICANT") {
+  background-color: #ff6600; /* Orange */
+}
+
+.damage-threat-tag:contains("OBSERVED") {
+  background-color: #9900cc; /* Purple */
+}
+
+.damage-threat-tag:contains("RADAR INDICATED") {
+  background-color: #3366ff; /* Blue */
 }
