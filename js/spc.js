@@ -204,8 +204,8 @@ const SPCManager = {
         try {
             mesoFeed.innerHTML = '<div class="loading">Loading mesoscale discussions...</div>';
             
-            // Use NOAA's XML feed directly for more reliable access
-            const response = await fetch(`https://www.spc.noaa.gov/products/md/rss.xml?${new Date().getTime()}`);
+            // Use the correct SPC RSS feed for MCDs
+            const response = await fetch(`https://www.spc.noaa.gov/products/spcmdrss.xml?${new Date().getTime()}`);
             
             if (!response.ok) {
                 throw new Error(`Failed to fetch mesoscale discussions: ${response.status}`);
@@ -247,16 +247,20 @@ const SPCManager = {
             }
             
             if (this.mesoDiscussions.length === 0) {
-                // Try alternative method - fetch from WPC feed which sometimes includes SPC MCDs
-                await this.fetchMCDsFromAlternateSource();
+                const mesoFeed = document.getElementById('meso-feed');
+                if (mesoFeed) {
+                    mesoFeed.innerHTML = '<div class="no-meso">No active mesoscale discussions found.</div>';
+                }
             } else {
                 // Display the discussions
                 this.displayMesoscaleDiscussions();
             }
         } catch (error) {
             console.error('Error fetching mesoscale discussions:', error);
-            // Try alternative source
-            await this.fetchMCDsFromAlternateSource();
+            const mesoFeed = document.getElementById('meso-feed');
+            if (mesoFeed) {
+                mesoFeed.innerHTML = '<div class="error">Unable to load mesoscale discussions.</div>';
+            }
         }
     },
 
