@@ -154,14 +154,13 @@ const AlertsManager = {
                 const descLower = props.description.toLowerCase();
 
                 // Check for tornado damage threat tags
-                if (descLower.includes('tornado damage threat')) {
-                    if (descLower.includes('catastrophic')) damageThreatTag = 'CATASTROPHIC DAMAGE THREAT';
-                    else if (descLower.includes('considerable')) damageThreatTag = 'PARTICULARILY DANGEROUS SITUATION';
+                if (eventLower.includes('tornado')) {
+                    if (descLower.includes('considerable')) damageThreatTag = 'PARTICULARILY DANGEROUS SITUATION';
                     else if (descLower.includes('catastrophic')) damageThreatTag = 'TORNADO EMERGENCY';
-                }
-                if (descLower.includes('tornado damage threat')) {
-                    if (descLower.includes('radar indicated')) damageThreatTag = 'RADAR INDICATED';
+                    else if (descLower.includes('POSSIBLE')) damageThreatTag = 'TORNADO POSSIBLE';
+                    else if (descLower.includes('radar indicated')) damageThreatTag = 'RADAR INDICATED';
                     else if (descLower.includes('observed')) damageThreatTag = 'OBSERVED';
+                    else if (descLower.includes('confirmed')) damageThreatTag = 'OBSERVED';
                 }
                 // Check for thunderstorm damage threat tags
                 else if (eventLower.includes('thunderstorm')) {
@@ -323,14 +322,6 @@ const AlertsManager = {
                 const descLower = alert.description.toLowerCase();
                 console.log(`Processing tornado alert: ${alert.id}, Description: ${descLower}`); // Debugging log
                 let tornadoDetails = '';
-
-                if (descLower.includes('confirmed')) {
-                    console.log(`'Observed' found in description for alert: ${alert.id}`); // Debugging log
-                    tornadoDetails = 'Observed';
-                } else if (descLower.includes('radar indicated')) {
-                    console.log(`'Radar Indicated' found in description for alert: ${alert.id}`); // Debugging log
-                    tornadoDetails = 'Radar Indicated';
-                }
 
                 if (tornadoDetails) {
                     const tornadoDetailElement = Utils.createElement('div', {
