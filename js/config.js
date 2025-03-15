@@ -36,7 +36,7 @@ const CONFIG = {
     
     // SPC settings
     SPC: {
-        refreshInterval: 300000, // 5 minutes in milliseconds
+        refreshInterval: 30000, // 5 minutes in milliseconds
         refreshCounter: 0 // Counter to track refreshes
     },
     
