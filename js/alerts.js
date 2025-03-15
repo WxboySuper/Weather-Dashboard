@@ -83,7 +83,7 @@ const AlertsManager = {
                     if (!previousAlerts.includes(alert.id)) {
                         setTimeout(() => {
                             const audioFile = this.getAudioFileForAlert(alert);
-                            this.triggerNotification(alert.event, alert.headline, 'alert', audioFile);
+                            this.triggerNotification(alert.event, alert.headline, 'alert', audioFile, alert.areaDesc);
                         }, delay);
                         delay += 1000; // Add 1 second delay between notifications
                     }
@@ -300,9 +300,7 @@ const AlertsManager = {
             return;
         }
 
-        // Adjusted logic to differentiate between new and updated alerts using alert IDs
-        const previousAlertIds = new Set(this.activeAlerts.map(alert => alert.id));
-
+        // Removed 'New' and 'Updated' logic for alerts
         filteredAlerts.forEach(alert => {
             const alertElement = Utils.createElement('div', {
                 class: `warning-item ${Utils.getAlertClass(alert.event)}`,
@@ -331,17 +329,6 @@ const AlertsManager = {
                     alertElement.appendChild(tornadoDetailElement);
                 }
             }
-
-            // Add visual indicator for new vs updated alerts
-            let statusIndicator = 'New';
-            if (previousAlertIds.has(alert.id)) {
-                statusIndicator = 'Updated';
-            }
-
-            const statusElement = Utils.createElement('div', {
-                class: 'status-indicator'
-            }, statusIndicator);
-            alertElement.appendChild(statusElement);
 
             const area = Utils.createElement('p', {}, alert.areaDesc);
             const time = Utils.createElement('p', {}, `Until: ${Utils.formatDate(alert.expires)}`);
@@ -436,8 +423,8 @@ const AlertsManager = {
         }
     },
 
-    // Add a function to trigger notifications
-    triggerNotification: function(title, message, type, audioFile) {
+    // Fix to ensure counties are displayed correctly in notifications
+    triggerNotification: function(title, message, type, audioFile, areaDesc) {
         // Create notification element
         const notificationContainer = document.querySelector('.notification-container');
         const notification = Utils.createElement('div', {
@@ -450,7 +437,7 @@ const AlertsManager = {
 
         const notificationBody = Utils.createElement('div', {
             class: 'notification-body'
-        }, message);
+        }, `${message} - Counties: ${areaDesc}`); // Use areaDesc parameter
 
         const closeButton = Utils.createElement('div', {
             class: 'notification-close'
