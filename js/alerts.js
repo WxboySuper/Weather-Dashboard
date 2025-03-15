@@ -155,8 +155,9 @@ const AlertsManager = {
 
                 // Check for tornado damage threat tags
                 if (eventLower.includes('tornado')) {
-                    if (descLower.includes('considerable')) damageThreatTag = 'PARTICULARILY DANGEROUS SITUATION';
-                    else if (descLower.includes('catastrophic')) damageThreatTag = 'TORNADO EMERGENCY';
+                    if (descLower.includes('catastrophic')) damageThreatTag = 'TORNADO EMERGENCY';
+                    else if (descLower.includes('tornado emergency')) damageThreatTag = 'EMERGENCY';
+                    else if (descLower.includes('considerable')) damageThreatTag = 'PARTICULARILY DANGEROUS SITUATION';
                     else if (descLower.includes('POSSIBLE')) damageThreatTag = 'TORNADO POSSIBLE';
                     else if (descLower.includes('radar indicated')) damageThreatTag = 'RADAR INDICATED';
                     else if (descLower.includes('observed')) damageThreatTag = 'OBSERVED';
@@ -299,7 +300,9 @@ const AlertsManager = {
             return;
         }
 
-        // Create an element for each alert
+        // Adjusted logic to differentiate between new and updated alerts using alert IDs
+        const previousAlertIds = new Set(this.activeAlerts.map(alert => alert.id));
+
         filteredAlerts.forEach(alert => {
             const alertElement = Utils.createElement('div', {
                 class: `warning-item ${Utils.getAlertClass(alert.event)}`,
@@ -317,10 +320,8 @@ const AlertsManager = {
             }
 
             // Add tornado-specific details if available
-            // Add debugging logs to verify if 'observed' is present in the description
             if (alert.event.toLowerCase().includes('tornado')) {
                 const descLower = alert.description.toLowerCase();
-                console.log(`Processing tornado alert: ${alert.id}, Description: ${descLower}`); // Debugging log
                 let tornadoDetails = '';
 
                 if (tornadoDetails) {
@@ -330,6 +331,17 @@ const AlertsManager = {
                     alertElement.appendChild(tornadoDetailElement);
                 }
             }
+
+            // Add visual indicator for new vs updated alerts
+            let statusIndicator = 'New';
+            if (previousAlertIds.has(alert.id)) {
+                statusIndicator = 'Updated';
+            }
+
+            const statusElement = Utils.createElement('div', {
+                class: 'status-indicator'
+            }, statusIndicator);
+            alertElement.appendChild(statusElement);
 
             const area = Utils.createElement('p', {}, alert.areaDesc);
             const time = Utils.createElement('p', {}, `Until: ${Utils.formatDate(alert.expires)}`);
