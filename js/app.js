@@ -64,6 +64,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add functionality to enable or disable sound effects with visual confirmation
     const soundToggle = document.getElementById('sound-toggle');
     const soundToggleLabel = document.querySelector('.sound-toggle');
+
+    // Create a volume slider
+    const volumeSlider = document.createElement('input');
+    volumeSlider.type = 'range';
+    volumeSlider.min = '0';
+    volumeSlider.max = '1';
+    volumeSlider.step = '0.1';
+    volumeSlider.value = '0.5'; // Default volume
+    volumeSlider.id = 'volume-slider';
+
+    // Add the volume slider to the header controls
+    soundToggleLabel.appendChild(volumeSlider);
+
+    // Update volume for sound effects
+    let soundVolume = 0.5; // Default volume
+    volumeSlider.addEventListener('input', (e) => {
+        soundVolume = parseFloat(e.target.value);
+    });
+
     let soundEnabled = true;
 
     // Add debugging logs to verify sound toggle behavior
@@ -80,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Add debugging log in triggerNotification
-    function triggerNotification(title, message, type, audioFile) {
+    function triggerNotification(title, message, type, audioFile, areaDesc) {
         console.log(`Triggering notification: ${title}, Sound Enabled: ${soundEnabled}, Audio File: ${audioFile}`); // Debugging log
 
         // Create notification element
@@ -95,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const notificationBody = Utils.createElement('div', {
             class: 'notification-body'
-        }, message);
+        }, `${message} - Counties: ${areaDesc}`);
 
         const closeButton = Utils.createElement('div', {
             class: 'notification-close'
@@ -111,9 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
         notification.appendChild(closeButton);
         notificationContainer.appendChild(notification);
 
-        // Play sound if enabled
-        if (soundEnabled && audioFile) {
+        // Play sound with adjusted volume
+        if (audioFile) {
             const audio = new Audio(audioFile);
+            audio.volume = soundVolume;
             audio.play();
         }
 
