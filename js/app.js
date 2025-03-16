@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add debugging log in triggerNotification
     function triggerNotification(title, message, type, audioFile, areaDesc) {
-        console.log(`Triggering notification: ${title}, Sound Enabled: ${soundEnabled}, Audio File: ${audioFile}`); // Debugging log
+        console.log(`Triggering notification: ${title}, Sound Enabled: ${soundEnabled}, Audio File: ${audioFile}, Volume: ${soundVolume}`); // Debugging log
 
         // Create notification element
         const notificationContainer = document.querySelector('.notification-container');
@@ -131,9 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
         notificationContainer.appendChild(notification);
 
         // Play sound with adjusted volume
-        if (audioFile) {
+        if (audioFile && soundEnabled) {
             const audio = new Audio(audioFile);
-            audio.volume = soundVolume;
+            audio.volume = soundVolume; // Apply the volume setting
             audio.play();
         }
 
