@@ -77,6 +77,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add the volume slider to the header controls
     soundToggleLabel.appendChild(volumeSlider);
 
+    // Add a test audio button to test the volume
+    const testAudioButton = document.createElement('button');
+    testAudioButton.textContent = 'Test Audio';
+    testAudioButton.id = 'test-audio-button';
+    testAudioButton.style.marginLeft = '10px';
+
+    // Append the button to the header controls
+    const headerControls = document.querySelector('.header-controls');
+    headerControls.appendChild(testAudioButton);
+
+    // Add event listener to play a test sound
+    const testAudioFile = 'assets/info-notification.mp3';
+    testAudioButton.addEventListener('click', () => {
+        const audio = new Audio(testAudioFile);
+        audio.volume = soundVolume; // Use the current volume setting
+        audio.play();
+    });
+
     // Update volume for sound effects
     let soundVolume = 0.5; // Default volume
     volumeSlider.addEventListener('input', (e) => {
